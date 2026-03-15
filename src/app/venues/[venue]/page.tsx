@@ -201,16 +201,16 @@ export default async function VenuePage({ params }: Props) {
 
               {/* Google rating */}
               {venue.google_rating && (
-                <div className="shrink-0 text-right">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-3xl font-bold">
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold leading-none">
                       {venue.google_rating}
                     </span>
                     <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
                   </div>
                   <StarRating rating={venue.google_rating} />
                   {venue.google_review_count != null && (
-                    <p className="mt-0.5 text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {venue.google_review_count.toLocaleString()} Google
                       reviews
                     </p>
