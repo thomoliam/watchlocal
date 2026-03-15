@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import VenueCard from "@/components/venues/VenueCard";
+import VenueFilters from "@/components/venues/VenueFilters";
 import { getCityBySlug, getVenuesInCity } from "@/lib/supabase/queries";
 import { SPORT_ICONS, SITE_URL } from "@/lib/constants";
 
@@ -103,10 +104,8 @@ export default async function CityPage({ params }: Props) {
 
         {/* Venues */}
         {venues.length > 0 ? (
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {venues.map((venue) => (
-              <VenueCard key={venue.id} venue={venue} />
-            ))}
+          <div className="mt-8">
+            <VenueFilters venues={venues} />
           </div>
         ) : (
           <div className="mt-8 rounded-xl border border-border p-8 text-center">

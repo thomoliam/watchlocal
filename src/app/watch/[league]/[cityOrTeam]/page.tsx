@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import VenueCard from "@/components/venues/VenueCard";
+import VenueFilters from "@/components/venues/VenueFilters";
 import FAQSection from "@/components/seo/FAQSection";
 import JsonLd from "@/components/seo/JsonLd";
 import {
@@ -202,10 +203,8 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
         </div>
 
         {venues.length > 0 ? (
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {venues.map((venue) => (
-              <VenueCard key={venue.id} venue={venue} />
-            ))}
+          <div className="mt-8">
+            <VenueFilters venues={venues} />
           </div>
         ) : (
           <div className="mt-8 rounded-xl border border-border p-8 text-center">
