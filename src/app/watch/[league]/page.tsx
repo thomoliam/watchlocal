@@ -19,10 +19,8 @@ interface Props {
   params: Promise<{ league: string }>;
 }
 
-export async function generateStaticParams() {
-  const slugs = await getTopLeagueSlugs(30);
-  return slugs.map((slug) => ({ league: slug }));
-}
+// Dynamic — no static params (Supabase queries need request context)
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { league: leagueSlug } = await params;
