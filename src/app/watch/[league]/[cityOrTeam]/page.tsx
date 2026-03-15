@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import VenueCard from "@/components/venues/VenueCard";
 import VenueFilters from "@/components/venues/VenueFilters";
+import ViewingInfoCard from "@/components/venues/ViewingInfoCard";
 import FAQSection from "@/components/seo/FAQSection";
 import JsonLd from "@/components/seo/JsonLd";
 import {
@@ -200,6 +201,14 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
               {city.name}. Know a great spot? Submit it below.
             </p>
           )}
+
+          <ViewingInfoCard
+            leagueSlug={leagueSlug}
+            leagueName={league.name}
+            cityName={city.name}
+            timezone={city.timezone}
+            countryCode={city.country_code}
+          />
         </div>
 
         {venues.length > 0 ? (

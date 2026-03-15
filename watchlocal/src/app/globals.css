@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -39,30 +38,4 @@
 body {
   background: var(--background);
   color: var(--foreground);
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Better focus visibility for keyboard navigation */
-:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Minimum touch targets on mobile */
-@media (pointer: coarse) {
-  button,
-  a,
-  [role="button"] {
-    min-height: 44px;
-  }
-}
-
-/* Muted background utility */
-.bg-muted-bg {
-  background-color: var(--muted);
 }

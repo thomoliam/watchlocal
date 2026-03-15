@@ -1,5 +1,8 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { countryToSlug } from "@/lib/countries";
+import { EVENTS } from "@/lib/events";
+import { getAllGuides } from "@/lib/guides";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://watchlocal.co";
@@ -96,6 +99,63 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Country pages — unique countries from cities
+  const { data: citiesWithCountry } = await supabase
+    .from("cities")
+    .select("country");
+  const countrySlugs = new Set<string>();
+  for (const c of citiesWithCountry || []) {
+    const slug = countryToSlug(c.country);
+    countrySlugs.add(slug);
+  }
+  const countryPages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/countries`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    },
+    ...Array.from(countrySlugs).map((slug) => ({
+      url: `${BASE_URL}/countries/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+  ];
+
+  // Event pages
+  const eventPages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/events`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    },
+    ...EVENTS.map((e) => ({
+      url: `${BASE_URL}/events/${e.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+  ];
+
+  // Guide pages
+  const guides = getAllGuides();
+  const guidePages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/guides`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+    ...guides.map((g) => ({
+      url: `${BASE_URL}/guides/${g.slug}`,
+      lastModified: new Date(g.frontmatter.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+  ];
+
   return [
     ...staticPages,
     ...leaguePages,
@@ -103,5 +163,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...teamCityPages,
     ...cityPages,
     ...venuePages,
+    ...countryPages,
+    ...eventPages,
+    ...guidePages,
   ];
 }

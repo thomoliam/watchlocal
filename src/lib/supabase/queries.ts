@@ -425,6 +425,156 @@ export async function getOtherCitiesForLeague(
 }
 
 // ============================================================
+// COUNTRIES
+// ============================================================
+
+/** Get all cities for a given country name */
+export async function getCitiesByCountry(
+  country: string
+): Promise<City[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("cities")
+    .select("*")
+    .ilike("country", country)
+    .order("tier", { ascending: true })
+    .order("name");
+  return data || [];
+}
+
+/** Get venue count for a given city slug */
+export async function getVenueCountForCity(
+  citySlug: string
+): Promise<number> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("venues")
+    .select("id", { count: "exact", head: true })
+    .eq("city_id", citySlug)
+    .eq("status", "active");
+  return count || 0;
+}
+
+/** Get all unique countries from cities table with city counts */
+export async function getAllCountriesWithCounts(): Promise<
+  { country: string; city_count: number; venue_count: number }[]
+> {
+  const supabase = await createClient();
+  const { data: cities } = await supabase.from("cities").select("country, slug");
+  if (!cities || cities.length === 0) return [];
+
+  // Count cities per country
+  const countryMap = new Map<string, { city_count: number; city_slugs: string[] }>();
+  for (const city of cities) {
+    const existing = countryMap.get(city.country) || { city_count: 0, city_slugs: [] };
+    existing.city_count++;
+    existing.city_slugs.push(city.slug);
+    countryMap.set(city.country, existing);
+  }
+
+  // Get venue counts via venues joined to cities
+  const { data: venues } = await supabase
+    .from("venues")
+    .select("city:cities!inner(country)")
+    .eq("status", "active");
+
+  const venueCountMap = new Map<string, number>();
+  for (const v of (venues || []) as any[]) {
+    const country = v.city?.country;
+    if (country) {
+      venueCountMap.set(country, (venueCountMap.get(country) || 0) + 1);
+    }
+  }
+
+  const results: { country: string; city_count: number; venue_count: number }[] = [];
+  for (const [country, info] of countryMap.entries()) {
+    results.push({
+      country,
+      city_count: info.city_count,
+      venue_count: venueCountMap.get(country) || 0,
+    });
+  }
+
+  results.sort((a, b) => b.venue_count - a.venue_count || a.country.localeCompare(b.country));
+  return results;
+}
+
+/** Get popular leagues in a country based on venue_leagues for venues in that country's cities */
+export async function getPopularLeaguesInCountry(
+  country: string
+): Promise<{ league_slug: string; league_name: string; sport: string; venue_count: number }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select(`
+      venue_leagues(league:leagues(slug, name, sport)),
+      city:cities!inner(country)
+    `)
+    .eq("city.country", country)
+    .eq("status", "active");
+
+  if (!data) return [];
+
+  const leagueMap = new Map<string, { league_slug: string; league_name: string; sport: string; venue_count: number }>();
+  for (const venue of data as any[]) {
+    for (const vl of venue.venue_leagues || []) {
+      if (!vl.league) continue;
+      const existing = leagueMap.get(vl.league.slug);
+      if (existing) {
+        existing.venue_count++;
+      } else {
+        leagueMap.set(vl.league.slug, {
+          league_slug: vl.league.slug,
+          league_name: vl.league.name,
+          sport: vl.league.sport,
+          venue_count: 1,
+        });
+      }
+    }
+  }
+
+  return Array.from(leagueMap.values()).sort((a, b) => b.venue_count - a.venue_count);
+}
+
+/** Get total venue count for venues in a given country */
+export async function getVenueCountForCountry(
+  country: string
+): Promise<number> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("venues")
+    .select("id, city:cities!inner(country)", { count: "exact", head: true })
+    .eq("city.country", country)
+    .eq("status", "active");
+  return count || 0;
+}
+
+/** Get venues in cities that belong to a given country, for counting */
+export async function getVenuesInCountryCities(
+  citySlugs: string[]
+): Promise<{ city_slug: string; venue_count: number }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select("city:cities!inner(slug)")
+    .in("city.slug", citySlugs)
+    .eq("status", "active");
+
+  const countMap = new Map<string, number>();
+  for (const v of (data || []) as any[]) {
+    const slug = v.city?.slug;
+    if (slug) {
+      countMap.set(slug, (countMap.get(slug) || 0) + 1);
+    }
+  }
+
+  return citySlugs.map((slug) => ({
+    city_slug: slug,
+    venue_count: countMap.get(slug) || 0,
+  }));
+}
+
+// ============================================================
 // PAGE GENERATION
 // ============================================================
 

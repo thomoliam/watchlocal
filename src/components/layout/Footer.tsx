@@ -92,6 +92,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/guides"
+                  className="text-sm opacity-70 transition-opacity hover:opacity-100"
+                >
+                  Guides
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/contact"
                   className="text-sm opacity-70 transition-opacity hover:opacity-100"
                 >

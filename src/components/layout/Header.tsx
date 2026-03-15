@@ -43,6 +43,18 @@ export default function Header() {
             Cities
           </Link>
           <Link
+            href="/events"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Events
+          </Link>
+          <Link
+            href="/guides"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Guides
+          </Link>
+          <Link
             href="/about"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
@@ -91,6 +103,20 @@ export default function Header() {
               onClick={() => setMobileOpen(false)}
             >
               Cities
+            </Link>
+            <Link
+              href="/events"
+              className="text-muted-foreground"
+              onClick={() => setMobileOpen(false)}
+            >
+              Events
+            </Link>
+            <Link
+              href="/guides"
+              className="text-muted-foreground"
+              onClick={() => setMobileOpen(false)}
+            >
+              Guides
             </Link>
             <Link
               href="/about"
