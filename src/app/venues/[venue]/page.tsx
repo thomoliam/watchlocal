@@ -18,6 +18,8 @@ import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
 import LeagueList from "@/components/venues/LeagueList";
+import ReviewForm from "@/components/venues/ReviewForm";
+import ShareButton from "@/components/venues/ShareButton";
 import { getVenueBySlug, getNearbyVenues } from "@/lib/supabase/queries";
 import { ATMOSPHERE_LABELS, PRICE_LABELS, SITE_URL } from "@/lib/constants";
 
@@ -219,6 +221,14 @@ export default async function VenuePage({ params }: Props) {
               )}
             </div>
 
+            {/* Share button */}
+            <div className="mt-3">
+              <ShareButton
+                title={`${venue.name} — WatchLocal`}
+                url={`${SITE_URL}/venues/${venue.slug}`}
+              />
+            </div>
+
             {/* "Best for" tags */}
             {bestForTags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -360,6 +370,9 @@ export default async function VenuePage({ params }: Props) {
                 </div>
               </section>
             )}
+
+            {/* Review form */}
+            <ReviewForm venueId={venue.id} venueName={venue.name} />
 
             {/* Internal links — city and league watch pages */}
             {(venue.city || confirmedLeagues.length > 0) && (
