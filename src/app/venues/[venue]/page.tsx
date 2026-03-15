@@ -30,11 +30,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const venue = await getVenueBySlug(venueSlug);
   if (!venue) return {};
   const cityName = venue.city?.name || "";
+  const title = `${venue.name} — Sports Bar in ${cityName} | WatchLocal`;
+  const description =
+    venue.description ||
+    `${venue.name} in ${cityName}. View screen count, leagues shown, atmosphere details, and reviews.`;
   return {
-    title: `${venue.name} — Sports Bar in ${cityName} | WatchLocal`,
-    description:
-      venue.description ||
-      `${venue.name} in ${cityName}. View screen count, leagues shown, atmosphere details, and reviews.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/venues/${venueSlug}`,
+      type: "website",
+      ...(venue.hero_image_url && {
+        images: [{ url: venue.hero_image_url, alt: venue.name }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(venue.hero_image_url && { images: [venue.hero_image_url] }),
+    },
+    alternates: {
+      canonical: `${SITE_URL}/venues/${venueSlug}`,
+    },
   };
 }
 
@@ -91,9 +111,10 @@ export default async function VenuePage({ params }: Props) {
 
   const venueSchema = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": ["LocalBusiness", "SportsActivityLocation"],
     name: venue.name,
     description: venue.description,
+    image: venue.hero_image_url || undefined,
     address: {
       "@type": "PostalAddress",
       streetAddress: venue.address,
@@ -105,7 +126,7 @@ export default async function VenuePage({ params }: Props) {
       latitude: venue.latitude,
       longitude: venue.longitude,
     },
-    ...(venue.website_url && { url: venue.website_url }),
+    url: venue.website_url || `${SITE_URL}/venues/${venue.slug}`,
     ...(venue.google_rating && {
       aggregateRating: {
         "@type": "AggregateRating",
@@ -113,6 +134,9 @@ export default async function VenuePage({ params }: Props) {
         reviewCount: venue.google_review_count || 0,
         bestRating: 5,
       },
+    }),
+    ...(venue.price_range && {
+      priceRange: venue.price_range,
     }),
   };
 
@@ -333,6 +357,39 @@ export default async function VenuePage({ params }: Props) {
                       )}
                     </div>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* Internal links — city and league watch pages */}
+            {(venue.city || confirmedLeagues.length > 0) && (
+              <section className="mt-8">
+                <h2 className="text-lg font-bold">Explore more</h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {venue.city && (
+                    <Link
+                      href={`/cities/${venue.city.slug}`}
+                      className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-brand hover:bg-brand hover:text-white"
+                    >
+                      All sports bars in {venue.city.name}
+                    </Link>
+                  )}
+                  {confirmedLeagues
+                    .filter((vl) => vl.league)
+                    .map((vl) => (
+                      <Link
+                        key={vl.id}
+                        href={
+                          venue.city
+                            ? `/watch/${vl.league!.slug}/${venue.city.slug}`
+                            : `/watch/${vl.league!.slug}`
+                        }
+                        className="rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-brand hover:bg-brand hover:text-white"
+                      >
+                        {vl.league!.short_name || vl.league!.name} in{" "}
+                        {venue.city?.name || "your city"}
+                      </Link>
+                    ))}
                 </div>
               </section>
             )}

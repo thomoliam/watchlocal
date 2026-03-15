@@ -6,7 +6,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import { getLeagueBySlug, getTeamsByLeague, getCitiesWithVenuesForLeague } from "@/lib/supabase/queries";
-import { SPORT_ICONS } from "@/lib/constants";
+import { SPORT_ICONS, SITE_URL } from "@/lib/constants";
 
 interface Props {
   params: Promise<{ league: string }>;
@@ -16,9 +16,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { league: leagueSlug } = await params;
   const league = await getLeagueBySlug(leagueSlug);
   if (!league) return {};
+  const title = `Where to Watch ${league.name} | Sports Bars Worldwide | WatchLocal`;
+  const description = `Find the best bars and venues showing ${league.name} in cities around the world. Verified venues, local kick-off times, and fan communities.`;
   return {
-    title: `Where to Watch ${league.name} | Best Sports Bars Worldwide — WatchLocal`,
-    description: `Find the best bars and venues showing ${league.name} in cities around the world. Verified venues, local kick-off times, and fan communities.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/watch/${leagueSlug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `${SITE_URL}/watch/${leagueSlug}`,
+    },
   };
 }
 

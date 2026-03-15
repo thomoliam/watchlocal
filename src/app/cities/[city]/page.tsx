@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import VenueCard from "@/components/venues/VenueCard";
 import { getCityBySlug, getVenuesInCity } from "@/lib/supabase/queries";
-import { SPORT_ICONS } from "@/lib/constants";
+import { SPORT_ICONS, SITE_URL } from "@/lib/constants";
 
 interface Props {
   params: Promise<{ city: string }>;
@@ -17,9 +17,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city: citySlug } = await params;
   const city = await getCityBySlug(citySlug);
   if (!city) return {};
+  const title = `Sports Bars in ${city.name} | Where to Watch Live Sport | WatchLocal`;
+  const description = `Find the best sports bars and venues in ${city.name}, ${city.country}. Browse by league, see screen counts, atmosphere ratings, and verified reviews.`;
   return {
-    title: `Best Sports Bars in ${city.name} | Watch Live Sport — WatchLocal`,
-    description: `Find the best sports bars and venues in ${city.name}, ${city.country}. Browse by league, see screen counts, atmosphere ratings, and verified reviews.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/cities/${citySlug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `${SITE_URL}/cities/${citySlug}`,
+    },
   };
 }
 

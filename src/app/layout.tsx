@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://watchlocal.co";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -13,9 +15,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WatchLocal — Find Sports Bars Anywhere",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "WatchLocal — Find Sports Bars Anywhere in the World",
+    template: "%s | WatchLocal",
+  },
   description:
     "Find the best bars and venues to watch live sport anywhere in the world. Verified venues, match schedules, and fan communities.",
+  openGraph: {
+    type: "website",
+    siteName: "WatchLocal",
+    title: "WatchLocal — Find Sports Bars Anywhere in the World",
+    description:
+      "Find the best bars and venues to watch live sport anywhere in the world. Verified venues, match schedules, and fan communities.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WatchLocal — Find Sports Bars Anywhere in the World",
+    description:
+      "Find the best bars and venues to watch live sport anywhere in the world. Verified venues, match schedules, and fan communities.",
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
 };
 
 export default function RootLayout({

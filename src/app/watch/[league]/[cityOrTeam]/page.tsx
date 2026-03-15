@@ -37,14 +37,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = await getCityBySlug(cityOrTeam);
   if (city) {
     const meta = generateLeagueCityMeta(league.name, city.name, 0);
-    return { title: meta.title, description: meta.description };
+    const title = `Where to Watch ${league.name} in ${city.name} | Best Sports Bars | WatchLocal`;
+    return {
+      title,
+      description: meta.description,
+      openGraph: {
+        title,
+        description: meta.description,
+        url: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description: meta.description,
+      },
+      alternates: {
+        canonical: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
+      },
+    };
   }
 
   const team = await getTeamBySlug(cityOrTeam);
   if (team) {
+    const title = `Where to Watch ${team.name} | Best Bars & Venues | WatchLocal`;
+    const description = `Find the best bars and venues showing ${team.name} (${league.name}) worldwide. Verified venues and fan communities.`;
     return {
-      title: `Where to Watch ${team.name} | Best Bars & Venues — WatchLocal`,
-      description: `Find the best bars and venues showing ${team.name} (${league.name}) worldwide. Verified venues and fan communities.`,
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        url: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+      },
+      alternates: {
+        canonical: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
+      },
     };
   }
 
