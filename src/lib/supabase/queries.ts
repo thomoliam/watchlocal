@@ -438,7 +438,7 @@ export async function getLeagueCityCombos() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("page_combos")
-    .select("league_slug, city_slug")
+    .select("league_slug, league_name, city_slug, city_name, city_country, venue_count")
     .gt("venue_count", 0);
 
   const seen = new Set<string>();

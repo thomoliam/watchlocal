@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Trophy, MapPin, Tv, Users } from "lucide-react";
+import { Trophy, MapPin, Tv, Users, Combine } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import {
@@ -8,6 +8,7 @@ import {
   searchVenues,
   searchLeagues,
   searchCities,
+  getLeagueCityCombos,
 } from "@/lib/supabase/queries";
 import { SPORT_ICONS } from "@/lib/constants";
 
@@ -19,8 +20,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const { q } = await searchParams;
   return {
     title: q
-      ? `Search results for "${q}" — WatchLocal`
-      : "Search — WatchLocal",
+      ? `Search results for "${q}"`
+      : "Search",
   };
 }
 
@@ -43,14 +44,33 @@ export default async function SearchPage({ searchParams }: Props) {
     );
   }
 
-  const [teams, venues, leagues, cities] = await Promise.all([
+  const [teams, venues, leagues, cities, allCombos] = await Promise.all([
     searchTeams(query),
     searchVenues(query),
     searchLeagues(query),
     searchCities(query),
+    getLeagueCityCombos(),
   ]);
 
-  const totalResults = teams.length + venues.length + leagues.length + cities.length;
+  // Build league+city combo results for matching cities and leagues
+  const queryLower = query.toLowerCase();
+  const matchedCitySlugs = new Set(cities.map((c) => c.slug));
+  const matchedLeagueSlugs = new Set(leagues.map((l) => l.slug));
+
+  // Find combos where the search matches either the city or the league
+  const combos = allCombos
+    .filter((c: any) => {
+      const cityMatch = matchedCitySlugs.has(c.city_slug);
+      const leagueMatch = matchedLeagueSlugs.has(c.league_slug);
+      // Also do a loose text match on city/league names from the combo data
+      const textMatch =
+        (c.city_name && c.city_name.toLowerCase().includes(queryLower)) ||
+        (c.league_name && c.league_name.toLowerCase().includes(queryLower));
+      return cityMatch || leagueMatch || textMatch;
+    })
+    .slice(0, 12);
+
+  const totalResults = teams.length + venues.length + leagues.length + cities.length + combos.length;
 
   return (
     <>
@@ -133,6 +153,40 @@ export default async function SearchPage({ searchParams }: Props) {
                       <p className="truncate text-xs text-muted-foreground">
                         {league.sport.replace("-", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                         {league.country ? ` · ${league.country}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* League + City Combos */}
+        {combos.length > 0 && (
+          <section className="mt-8">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <Tv className="h-5 w-5 text-brand" />
+              Where to Watch
+            </h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {combos.map((combo: any) => (
+                <Link
+                  key={`${combo.league_slug}-${combo.city_slug}`}
+                  href={`/watch/${combo.league_slug}/${combo.city_slug}`}
+                  className="group block rounded-xl border border-border bg-background p-4 transition-all hover:border-brand hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg dark:bg-blue-950">
+                      📺
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold group-hover:text-brand">
+                        {combo.league_name} in {combo.city_name}
+                      </h3>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {combo.venue_count} venue{combo.venue_count !== 1 ? "s" : ""}
+                        {combo.city_country ? ` · ${combo.city_country}` : ""}
                       </p>
                     </div>
                   </div>

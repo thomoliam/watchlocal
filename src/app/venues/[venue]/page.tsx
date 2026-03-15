@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const venue = await getVenueBySlug(venueSlug);
   if (!venue) return {};
   const cityName = venue.city?.name || "";
-  const title = `${venue.name} — Sports Bar in ${cityName} | WatchLocal`;
+  const title = `${venue.name} — Sports Bar in ${cityName}`;
   const description =
     venue.description ||
     `${venue.name} in ${cityName}. View screen count, leagues shown, atmosphere details, and reviews.`;

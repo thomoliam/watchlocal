@@ -36,8 +36,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title =
     cityCount > 0
-      ? `Where to Watch ${league.name} Worldwide | Sports Bars in ${cityCount}+ Cities | WatchLocal`
-      : `Where to Watch ${league.name} Worldwide | Sports Bars | WatchLocal`;
+      ? `Where to Watch ${league.name} Worldwide | Sports Bars in ${cityCount}+ Cities`
+      : `Where to Watch ${league.name} Worldwide | Sports Bars`;
 
   const description =
     cityCount > 0

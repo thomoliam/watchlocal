@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = await getCityBySlug(cityOrTeam);
   if (city) {
     const meta = generateLeagueCityMeta(league.name, city.name, 0);
-    const title = `Where to Watch ${league.name} in ${city.name} | Best Sports Bars | WatchLocal`;
+    const title = `Where to Watch ${league.name} in ${city.name} | Best Sports Bars`;
     return {
       title,
       description: meta.description,
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const team = await getTeamBySlug(cityOrTeam);
   if (team) {
-    const title = `Where to Watch ${team.name} | Best Bars & Venues | WatchLocal`;
+    const title = `Where to Watch ${team.name} | Best Bars & Venues`;
     const description = `Find the best bars and venues showing ${team.name} (${league.name}) worldwide. Verified venues and fan communities.`;
     return {
       title,

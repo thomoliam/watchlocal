@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city: citySlug } = await params;
   const city = await getCityBySlug(citySlug);
   if (!city) return {};
-  const title = `Sports Bars in ${city.name} | Where to Watch Live Sport | WatchLocal`;
+  const title = `Sports Bars in ${city.name} | Where to Watch Live Sport`;
   const description = `Find the best sports bars and venues in ${city.name}, ${city.country}. Browse by league, see screen counts, atmosphere ratings, and verified reviews.`;
   return {
     title,
