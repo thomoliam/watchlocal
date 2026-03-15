@@ -36,7 +36,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   ]);
   if (!league || !team || !city) return {};
   const meta = generateTeamCityMeta(team.name, city.name, league.name, 0);
-  return { title: meta.title, description: meta.description };
+  return {
+    title: meta.title,
+    description: meta.description,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: `${SITE_URL}/watch/${leagueSlug}/${teamSlug}/${citySlug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+    },
+    alternates: {
+      canonical: `${SITE_URL}/watch/${leagueSlug}/${teamSlug}/${citySlug}`,
+    },
+  };
 }
 
 export default async function MoneyPage({ params }: Props) {
