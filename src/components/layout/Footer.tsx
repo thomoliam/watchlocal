@@ -92,22 +92,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/blog"
-                  className="text-sm opacity-70 transition-opacity hover:opacity-100"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="text-sm opacity-70 transition-opacity hover:opacity-100"
-                >
-                  FAQs
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/contact"
                   className="text-sm opacity-70 transition-opacity hover:opacity-100"
                 >
@@ -129,14 +113,6 @@ export default function Footer() {
                   className="text-sm opacity-70 transition-opacity hover:opacity-100"
                 >
                   Pub sign up
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/broadcasters"
-                  className="text-sm opacity-70 transition-opacity hover:opacity-100"
-                >
-                  Broadcasters
                 </Link>
               </li>
               <li>
