@@ -13,38 +13,19 @@ import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/search/SearchBar";
 import SuggestedLeagues from "@/components/home/SuggestedLeagues";
 import JsonLd from "@/components/seo/JsonLd";
+import { getLeagues, getAllCities } from "@/lib/supabase/queries";
+import { SPORT_ICONS } from "@/lib/constants";
 
-const SAMPLE_LEAGUES = [
-  { name: "Premier League", emoji: "⚽", slug: "premier-league" },
-  { name: "NFL", emoji: "🏈", slug: "nfl" },
-  { name: "NBA", emoji: "🏀", slug: "nba" },
-  { name: "NRL", emoji: "🏉", slug: "nrl" },
-  { name: "Formula 1", emoji: "🏎️", slug: "formula-1" },
-  { name: "UFC", emoji: "🥊", slug: "ufc" },
-  { name: "AFL", emoji: "🏉", slug: "afl" },
-  { name: "La Liga", emoji: "⚽", slug: "la-liga" },
-  { name: "Champions League", emoji: "⚽", slug: "champions-league" },
-  { name: "Bundesliga", emoji: "⚽", slug: "bundesliga" },
-  { name: "Serie A", emoji: "⚽", slug: "serie-a" },
-  { name: "Six Nations", emoji: "🏉", slug: "six-nations" },
+// Revalidate homepage every 60 minutes
+export const revalidate = 3600;
+
+const FEATURED_CITIES = [
+  "bangkok", "bali", "london", "dubai", "sydney", "barcelona",
+  "new-york", "singapore", "ho-chi-minh-city", "melbourne",
+  "amsterdam", "tokyo",
 ];
 
-const SAMPLE_CITIES = [
-  { name: "Bangkok", slug: "bangkok", country: "Thailand" },
-  { name: "Bali", slug: "bali", country: "Indonesia" },
-  { name: "London", slug: "london", country: "UK" },
-  { name: "Dubai", slug: "dubai", country: "UAE" },
-  { name: "Sydney", slug: "sydney", country: "Australia" },
-  { name: "Barcelona", slug: "barcelona", country: "Spain" },
-  { name: "New York", slug: "new-york", country: "USA" },
-  { name: "Singapore", slug: "singapore", country: "Singapore" },
-  { name: "Ho Chi Minh City", slug: "ho-chi-minh-city", country: "Vietnam" },
-  { name: "Melbourne", slug: "melbourne", country: "Australia" },
-  { name: "Amsterdam", slug: "amsterdam", country: "Netherlands" },
-  { name: "Tokyo", slug: "tokyo", country: "Japan" },
-];
-
-const SAMPLE_VENUES = [
+const FEATURED_VENUES = [
   {
     name: "The Sportsman Bar & Restaurant",
     city: "Bangkok",
@@ -77,7 +58,18 @@ const SAMPLE_VENUES = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const [leagues, allCities] = await Promise.all([
+    getLeagues(),
+    getAllCities(),
+  ]);
+
+  // Pick top leagues (by tier) and featured cities
+  const topLeagues = leagues.slice(0, 12);
+  const featuredCities = FEATURED_CITIES
+    .map((slug) => allCities.find((c) => c.slug === slug))
+    .filter(Boolean);
+
   return (
     <>
       <JsonLd
@@ -123,8 +115,8 @@ export default function Home() {
               anywhere in the world
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
-              Verified sports bars, local kick-off times, and fan communities in
-              600+ cities worldwide.
+              Verified sports bars, local kick-off times, and fan communities in{" "}
+              {allCities.length}+ cities worldwide.
             </p>
             <div className="mx-auto mt-10 max-w-2xl">
               <SearchBar size="large" autoFocus />
@@ -157,22 +149,32 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-4 py-16">
             <h2 className="text-2xl font-bold">Browse by league</h2>
             <p className="mt-1 text-muted-foreground">
-              25 leagues across football, rugby, basketball, motorsport and
+              {leagues.length} leagues across football, rugby, basketball, motorsport and
               more.
             </p>
             <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {SAMPLE_LEAGUES.map((league) => (
+              {topLeagues.map((league) => (
                 <Link
                   key={league.slug}
                   href={`/watch/${league.slug}`}
                   className="group flex items-center gap-3 rounded-xl border border-border bg-background p-4 transition-all hover:border-brand hover:shadow-md"
                 >
-                  <span className="text-2xl">{league.emoji}</span>
+                  <span className="text-2xl">{SPORT_ICONS[league.sport] || "🏆"}</span>
                   <span className="font-medium">{league.name}</span>
                   <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
               ))}
             </div>
+            {leagues.length > 12 && (
+              <div className="mt-4 text-center">
+                <Link
+                  href="/watch/premier-league"
+                  className="text-sm font-medium text-brand hover:underline"
+                >
+                  View all {leagues.length} leagues
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 
@@ -185,17 +187,17 @@ export default function Home() {
               scenes.
             </p>
             <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {SAMPLE_CITIES.map((city) => (
+              {featuredCities.map((city) => (
                 <Link
-                  key={city.slug}
-                  href={`/cities/${city.slug}`}
+                  key={city!.slug}
+                  href={`/cities/${city!.slug}`}
                   className="group flex items-center gap-3 rounded-xl border border-border p-4 transition-all hover:border-brand hover:shadow-md"
                 >
                   <MapPin className="h-5 w-5 text-brand" />
                   <div>
-                    <div className="font-medium">{city.name}</div>
+                    <div className="font-medium">{city!.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {city.country}
+                      {city!.country}
                     </div>
                   </div>
                   <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
@@ -213,7 +215,7 @@ export default function Home() {
               Verified sports bars loved by expats and travellers.
             </p>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {SAMPLE_VENUES.map((venue) => (
+              {FEATURED_VENUES.map((venue) => (
                 <Link
                   key={venue.slug}
                   href={`/venues/${venue.slug}`}
@@ -230,10 +232,6 @@ export default function Home() {
                           {venue.city}
                         </p>
                       </div>
-                      <span className="flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-white">
-                        <CheckCircle className="h-3 w-3" />
-                        Verified
-                      </span>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                       {venue.description}
@@ -313,9 +311,9 @@ export default function Home() {
             </p>
             <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
               {[
-                { value: "600+", label: "Cities indexed" },
+                { value: `${allCities.length}+`, label: "Cities indexed" },
                 { value: "100+", label: "Verified venues" },
-                { value: "25+", label: "Leagues covered" },
+                { value: `${leagues.length}+`, label: "Leagues covered" },
                 { value: "50+", label: "Countries" },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
