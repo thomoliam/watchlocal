@@ -14,6 +14,7 @@ const LEAGUE_OPTIONS = LEAGUES.map((l) => ({
 export default function SubmitVenuePage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [selectedLeagues, setSelectedLeagues] = useState<string[]>([]);
 
   function toggleLeague(slug: string) {
@@ -42,6 +43,7 @@ export default function SubmitVenuePage() {
       submitter_email: form.get("submitter_email"),
     };
 
+    setError("");
     try {
       const res = await fetch("/api/submit-venue", {
         method: "POST",
@@ -50,9 +52,12 @@ export default function SubmitVenuePage() {
       });
       if (res.ok) {
         setSubmitted(true);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Something went wrong. Please try again.");
       }
     } catch {
-      // Handle error
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -249,6 +254,12 @@ export default function SubmitVenuePage() {
               I am the owner/manager of this venue
             </label>
           </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
