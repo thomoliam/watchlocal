@@ -301,8 +301,52 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA */}
+        {/* Social proof / stats */}
         <section className="border-t border-border bg-muted">
+          <div className="mx-auto max-w-6xl px-4 py-16">
+            <h2 className="text-center text-2xl font-bold">
+              Trusted by sports fans worldwide
+            </h2>
+            <p className="mt-2 text-center text-muted-foreground">
+              WatchLocal is the go-to resource for expats and travellers who
+              never want to miss a match.
+            </p>
+            <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
+              {[
+                { value: "600+", label: "Cities indexed" },
+                { value: "100+", label: "Verified venues" },
+                { value: "25+", label: "Leagues covered" },
+                { value: "50+", label: "Countries" },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-4xl font-bold text-brand">
+                    {stat.value}
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Every venue verified for current season
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Free to use, no sign-up required
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Community-powered reviews
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-4 py-16 text-center">
             <h2 className="text-2xl font-bold">Know a great sports bar?</h2>
             <p className="mt-2 text-muted-foreground">

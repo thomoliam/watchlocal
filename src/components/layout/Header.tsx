@@ -43,6 +43,12 @@ export default function Header() {
             Cities
           </Link>
           <Link
+            href="/about"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            About
+          </Link>
+          <Link
             href="/submit-venue"
             className="rounded-lg bg-brand px-4 py-2 text-white transition-opacity hover:opacity-90"
           >
@@ -85,6 +91,13 @@ export default function Header() {
               onClick={() => setMobileOpen(false)}
             >
               Cities
+            </Link>
+            <Link
+              href="/about"
+              className="text-muted-foreground"
+              onClick={() => setMobileOpen(false)}
+            >
+              About
             </Link>
             <Link
               href="/submit-venue"
