@@ -65,6 +65,8 @@ export interface Venue {
   venue_leagues?: VenueLeague[];
   venue_teams?: VenueTeam[];
   reviews?: Review[];
+  /** Computed by getNearbyVenues — distance in kilometres */
+  distance_km?: number;
 }
 
 export interface VenueLeague {

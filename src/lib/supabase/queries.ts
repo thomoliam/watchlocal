@@ -215,15 +215,21 @@ export async function getNearbyVenues(
 
   if (!data || data.length === 0) return [];
 
-  // Sort by distance and take closest N
-  const withDist = data.map((v) => ({
-    ...v,
-    _dist:
-      Math.pow(v.latitude - latitude, 2) +
-      Math.pow(v.longitude - longitude, 2),
-  }));
-  withDist.sort((a, b) => a._dist - b._dist);
-  return withDist.slice(0, limit).map(({ _dist, ...v }) => v) as Venue[];
+  // Haversine-ish distance in km, then sort and take closest N
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const withDist = data.map((v) => {
+    const dLat = toRad(v.latitude - latitude);
+    const dLon = toRad(v.longitude - longitude);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(latitude)) *
+        Math.cos(toRad(v.latitude)) *
+        Math.sin(dLon / 2) ** 2;
+    const km = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return { ...v, distance_km: Math.round(km * 10) / 10 };
+  });
+  withDist.sort((a, b) => a.distance_km - b.distance_km);
+  return withDist.slice(0, limit);
 }
 
 // ============================================================
@@ -297,6 +303,61 @@ export async function getReviewsForVenue(venueId: string): Promise<Review[]> {
     .eq("venue_id", venueId)
     .eq("is_approved", true)
     .order("created_at", { ascending: false });
+  return data || [];
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+
+export async function searchTeams(query: string): Promise<Team[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("teams")
+    .select("*, league:leagues(*)")
+    .or(`name.ilike.%${query}%,short_name.ilike.%${query}%,slug.ilike.%${query}%`)
+    .eq("is_active", true)
+    .order("name")
+    .limit(20);
+  return data || [];
+}
+
+export async function searchVenues(query: string): Promise<Venue[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select(`
+      *,
+      city:cities(*),
+      venue_leagues(*, league:leagues(*))
+    `)
+    .ilike("name", `%${query}%`)
+    .eq("status", "active")
+    .order("is_verified", { ascending: false })
+    .limit(20);
+  return data || [];
+}
+
+export async function searchLeagues(query: string): Promise<League[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("leagues")
+    .select("*")
+    .or(`name.ilike.%${query}%,short_name.ilike.%${query}%,slug.ilike.%${query}%`)
+    .eq("is_active", true)
+    .order("tier", { ascending: true })
+    .limit(20);
+  return data || [];
+}
+
+export async function searchCities(query: string): Promise<City[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("cities")
+    .select("*")
+    .or(`name.ilike.%${query}%,slug.ilike.%${query}%,country.ilike.%${query}%`)
+    .order("tier", { ascending: true })
+    .limit(20);
   return data || [];
 }
 

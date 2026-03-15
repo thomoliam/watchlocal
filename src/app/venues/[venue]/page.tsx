@@ -6,12 +6,10 @@ import {
   MapPin,
   Tv,
   Star,
-  CheckCircle,
   Utensils,
   TreePine,
   Globe,
   ExternalLink,
-  Clock,
   Users,
   Monitor,
 } from "lucide-react";
@@ -19,6 +17,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
+import LeagueList from "@/components/venues/LeagueList";
 import { getVenueBySlug, getNearbyVenues } from "@/lib/supabase/queries";
 import { ATMOSPHERE_LABELS, PRICE_LABELS, SITE_URL } from "@/lib/constants";
 
@@ -37,6 +36,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       venue.description ||
       `${venue.name} in ${cityName}. View screen count, leagues shown, atmosphere details, and reviews.`,
   };
+}
+
+/** Render 1-5 star icons, filling proportionally to the rating. */
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <span className="inline-flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i <= Math.round(rating)
+              ? "fill-amber-400 text-amber-400"
+              : "fill-none text-gray-300 dark:text-gray-600"
+          }`}
+        />
+      ))}
+    </span>
+  );
 }
 
 export default async function VenuePage({ params }: Props) {
@@ -62,10 +79,15 @@ export default async function VenuePage({ params }: Props) {
   // Only show leagues that have notes or are primary (confirmed coverage)
   const confirmedLeagues = venue.venue_leagues?.filter(
     (vl) => vl.is_primary || vl.notes
-  );
+  ) || [];
   const otherLeagues = venue.venue_leagues?.filter(
     (vl) => !vl.is_primary && !vl.notes
-  );
+  ) || [];
+
+  // Generate "Best for" tags from primary leagues
+  const bestForTags = (venue.venue_leagues || [])
+    .filter((vl) => vl.is_primary && vl.league)
+    .map((vl) => vl.league!.short_name || vl.league!.name);
 
   const venueSchema = {
     "@context": "https://schema.org",
@@ -127,7 +149,7 @@ export default async function VenuePage({ params }: Props) {
               />
             </div>
           ) : (
-            <div className="flex h-48 items-center justify-center bg-brand/5 sm:h-64">
+            <div className="flex h-48 items-center justify-center bg-brand/5 dark:bg-brand/10 sm:h-64">
               <div className="text-center">
                 <Monitor className="mx-auto h-12 w-12 text-brand/30" />
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -141,18 +163,10 @@ export default async function VenuePage({ params }: Props) {
         <div className="mt-6 grid gap-8 md:grid-cols-3">
           {/* Main content */}
           <div className="md:col-span-2">
-            {/* Header with name + rating */}
+            {/* Header with name + Google rating */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold">{venue.name}</h1>
-                  {venue.is_verified && (
-                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand px-3 py-1 text-sm font-medium text-white">
-                      <CheckCircle className="h-4 w-4" />
-                      Verified
-                    </span>
-                  )}
-                </div>
+                <h1 className="text-3xl font-bold">{venue.name}</h1>
                 {venue.address && (
                   <p className="mt-2 flex items-center gap-1.5 text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0" />
@@ -170,7 +184,8 @@ export default async function VenuePage({ params }: Props) {
                     </span>
                     <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
                   </div>
-                  {venue.google_review_count && (
+                  <StarRating rating={venue.google_rating} />
+                  {venue.google_review_count != null && (
                     <p className="mt-0.5 text-sm text-muted-foreground">
                       {venue.google_review_count.toLocaleString()} Google
                       reviews
@@ -179,6 +194,20 @@ export default async function VenuePage({ params }: Props) {
                 </div>
               )}
             </div>
+
+            {/* "Best for" tags */}
+            {bestForTags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {bestForTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand dark:bg-brand/20"
+                  >
+                    Best for {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {venue.description && (
               <p className="mt-4 leading-relaxed text-muted-foreground">
@@ -252,56 +281,12 @@ export default async function VenuePage({ params }: Props) {
               )}
             </div>
 
-            {/* Leagues — split into confirmed vs also shows */}
-            {confirmedLeagues && confirmedLeagues.length > 0 && (
-              <section className="mt-8">
-                <h2 className="text-lg font-bold">What&apos;s on</h2>
-                <div className="mt-3 space-y-2">
-                  {confirmedLeagues.map((vl) => (
-                    <div
-                      key={vl.id}
-                      className="flex items-center justify-between rounded-lg border border-border p-3"
-                    >
-                      <div>
-                        <Link
-                          href={`/watch/${vl.league?.slug}`}
-                          className="font-medium hover:text-brand"
-                        >
-                          {vl.league?.name}
-                        </Link>
-                        {vl.notes && (
-                          <p className="mt-0.5 text-sm text-muted-foreground">
-                            {vl.notes}
-                          </p>
-                        )}
-                      </div>
-                      {vl.is_primary && (
-                        <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
-                          Primary
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {otherLeagues && otherLeagues.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Also reported to show
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {otherLeagues.map((vl) => (
-                        <Link
-                          key={vl.id}
-                          href={`/watch/${vl.league?.slug}`}
-                          className="rounded-md border border-border px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:border-brand hover:text-brand"
-                        >
-                          {vl.league?.short_name || vl.league?.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
+            {/* Leagues — with show all toggle */}
+            {confirmedLeagues.length > 0 && (
+              <LeagueList
+                confirmedLeagues={confirmedLeagues}
+                otherLeagues={otherLeagues}
+              />
             )}
 
             {/* Reviews */}
@@ -363,9 +348,18 @@ export default async function VenuePage({ params }: Props) {
                       href={`/venues/${nearby.slug}`}
                       className="group rounded-lg border border-border p-4 transition-all hover:border-brand hover:shadow-sm"
                     >
-                      <h3 className="font-semibold group-hover:text-brand">
-                        {nearby.name}
-                      </h3>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold group-hover:text-brand">
+                          {nearby.name}
+                        </h3>
+                        {nearby.distance_km != null && (
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-muted-foreground dark:bg-gray-800">
+                            {nearby.distance_km < 1
+                              ? `${Math.round(nearby.distance_km * 1000)}m`
+                              : `${nearby.distance_km}km`}
+                          </span>
+                        )}
+                      </div>
                       {nearby.address && (
                         <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 shrink-0" />

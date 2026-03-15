@@ -34,16 +34,22 @@ export default function SearchBar({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch cities from DB on mount
+  // Fetch cities and teams from DB on mount
   useEffect(() => {
-    async function loadCities() {
+    async function loadSearchData() {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("cities")
-        .select("name, slug, country")
-        .order("name");
-      if (!data) return;
-      const cityItems: SearchItem[] = data.map((c) => ({
+      const [citiesRes, teamsRes] = await Promise.all([
+        supabase
+          .from("cities")
+          .select("name, slug, country")
+          .order("name"),
+        supabase
+          .from("teams")
+          .select("name, short_name, slug, league:leagues(name, short_name, slug, sport)")
+          .eq("is_active", true)
+          .order("name"),
+      ]);
+      const cityItems: SearchItem[] = (citiesRes.data || []).map((c) => ({
         type: "city" as const,
         label: c.name,
         subtitle: c.country,
@@ -51,9 +57,22 @@ export default function SearchBar({
         aliases: [c.name.toLowerCase(), c.slug],
         citySlug: c.slug,
       }));
-      setSearchIndex([...LEAGUES, ...cityItems]);
+      const teamItems: SearchItem[] = (teamsRes.data || []).map((t: any) => ({
+        type: "team" as const,
+        label: t.name,
+        subtitle: t.league?.name || "",
+        href: `/search?q=${encodeURIComponent(t.name)}`,
+        aliases: [
+          t.name.toLowerCase(),
+          t.slug,
+          ...(t.short_name ? [t.short_name.toLowerCase()] : []),
+        ],
+        teamSlug: t.slug,
+        leagueSlug: t.league?.slug,
+      }));
+      setSearchIndex([...LEAGUES, ...cityItems, ...teamItems]);
     }
-    loadCities();
+    loadSearchData();
   }, []);
 
   const fuse = useMemo(
@@ -166,14 +185,11 @@ export default function SearchBar({
   function handleSubmit() {
     if (activeIndex >= 0 && results[activeIndex]) {
       navigate(results[activeIndex]);
-    } else if (results.length > 0) {
-      navigate(results[0]);
-    } else {
-      // Try compound query parsing as a fallback
-      const compound = parseCompoundQuery(query);
-      if (compound) {
-        navigate(compound);
-      }
+    } else if (query.trim().length >= 2) {
+      // Navigate to search results page for any query
+      setIsOpen(false);
+      setQuery("");
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
     }
   }
 
