@@ -59,6 +59,8 @@ export interface Venue {
   instagram_handle: string | null;
   facebook_url: string | null;
   hero_image_url: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
   city?: City;
   venue_leagues?: VenueLeague[];
   venue_teams?: VenueTeam[];

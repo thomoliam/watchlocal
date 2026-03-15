@@ -187,6 +187,45 @@ export async function getVenuesInCity(citySlug: string): Promise<Venue[]> {
   return data || [];
 }
 
+export async function getNearbyVenues(
+  venueId: string,
+  latitude: number,
+  longitude: number,
+  limit: number = 4
+): Promise<Venue[]> {
+  const supabase = await createClient();
+  // Simple bounding-box approach — fetch nearby then sort by distance in JS
+  const delta = 0.5; // ~50km radius
+  const { data } = await supabase
+    .from("venues")
+    .select(
+      `
+      *,
+      city:cities(*),
+      venue_leagues(*, league:leagues(*))
+    `
+    )
+    .neq("id", venueId)
+    .eq("status", "active")
+    .gte("latitude", latitude - delta)
+    .lte("latitude", latitude + delta)
+    .gte("longitude", longitude - delta)
+    .lte("longitude", longitude + delta)
+    .limit(20);
+
+  if (!data || data.length === 0) return [];
+
+  // Sort by distance and take closest N
+  const withDist = data.map((v) => ({
+    ...v,
+    _dist:
+      Math.pow(v.latitude - latitude, 2) +
+      Math.pow(v.longitude - longitude, 2),
+  }));
+  withDist.sort((a, b) => a._dist - b._dist);
+  return withDist.slice(0, limit).map(({ _dist, ...v }) => v) as Venue[];
+}
+
 // ============================================================
 // FIXTURES
 // ============================================================

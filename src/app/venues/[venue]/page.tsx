@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import {
   MapPin,
@@ -10,12 +11,15 @@ import {
   TreePine,
   Globe,
   ExternalLink,
+  Clock,
+  Users,
+  Monitor,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
-import { getVenueBySlug } from "@/lib/supabase/queries";
+import { getVenueBySlug, getNearbyVenues } from "@/lib/supabase/queries";
 import { ATMOSPHERE_LABELS, PRICE_LABELS, SITE_URL } from "@/lib/constants";
 
 interface Props {
@@ -29,7 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityName = venue.city?.name || "";
   return {
     title: `${venue.name} — Sports Bar in ${cityName} | WatchLocal`,
-    description: venue.description || `${venue.name} in ${cityName}. View screen count, leagues shown, atmosphere details, and reviews.`,
+    description:
+      venue.description ||
+      `${venue.name} in ${cityName}. View screen count, leagues shown, atmosphere details, and reviews.`,
   };
 }
 
@@ -38,6 +44,13 @@ export default async function VenuePage({ params }: Props) {
   const venue = await getVenueBySlug(venueSlug);
   if (!venue) notFound();
 
+  const nearbyVenues = await getNearbyVenues(
+    venue.id,
+    venue.latitude,
+    venue.longitude,
+    4
+  );
+
   const avgRating =
     venue.reviews && venue.reviews.length > 0
       ? (
@@ -45,6 +58,14 @@ export default async function VenuePage({ params }: Props) {
           venue.reviews.length
         ).toFixed(1)
       : null;
+
+  // Only show leagues that have notes or are primary (confirmed coverage)
+  const confirmedLeagues = venue.venue_leagues?.filter(
+    (vl) => vl.is_primary || vl.notes
+  );
+  const otherLeagues = venue.venue_leagues?.filter(
+    (vl) => !vl.is_primary && !vl.notes
+  );
 
   const venueSchema = {
     "@context": "https://schema.org",
@@ -63,11 +84,12 @@ export default async function VenuePage({ params }: Props) {
       longitude: venue.longitude,
     },
     ...(venue.website_url && { url: venue.website_url }),
-    ...(avgRating && {
+    ...(venue.google_rating && {
       aggregateRating: {
         "@type": "AggregateRating",
-        ratingValue: avgRating,
-        reviewCount: venue.reviews!.length,
+        ratingValue: venue.google_rating,
+        reviewCount: venue.google_review_count || 0,
+        bestRating: 5,
       },
     }),
   };
@@ -92,25 +114,71 @@ export default async function VenuePage({ params }: Props) {
 
         <JsonLd data={venueSchema} />
 
+        {/* Hero image section */}
+        <div className="mt-6 overflow-hidden rounded-2xl">
+          {venue.hero_image_url ? (
+            <div className="relative h-64 w-full sm:h-80 md:h-96">
+              <Image
+                src={venue.hero_image_url}
+                alt={venue.name}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+          ) : (
+            <div className="flex h-48 items-center justify-center bg-brand/5 sm:h-64">
+              <div className="text-center">
+                <Monitor className="mx-auto h-12 w-12 text-brand/30" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No photos yet
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="mt-6 grid gap-8 md:grid-cols-3">
           {/* Main content */}
           <div className="md:col-span-2">
-            <div className="flex items-start justify-between gap-3">
-              <h1 className="text-3xl font-bold">{venue.name}</h1>
-              {venue.is_verified && (
-                <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand px-3 py-1 text-sm font-medium text-white">
-                  <CheckCircle className="h-4 w-4" />
-                  Verified
-                </span>
+            {/* Header with name + rating */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold">{venue.name}</h1>
+                  {venue.is_verified && (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand px-3 py-1 text-sm font-medium text-white">
+                      <CheckCircle className="h-4 w-4" />
+                      Verified
+                    </span>
+                  )}
+                </div>
+                {venue.address && (
+                  <p className="mt-2 flex items-center gap-1.5 text-muted-foreground">
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    {venue.address}
+                  </p>
+                )}
+              </div>
+
+              {/* Google rating */}
+              {venue.google_rating && (
+                <div className="shrink-0 text-right">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-3xl font-bold">
+                      {venue.google_rating}
+                    </span>
+                    <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
+                  </div>
+                  {venue.google_review_count && (
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {venue.google_review_count.toLocaleString()} Google
+                      reviews
+                    </p>
+                  )}
+                </div>
               )}
             </div>
-
-            {venue.address && (
-              <p className="mt-2 flex items-center gap-1.5 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                {venue.address}
-              </p>
-            )}
 
             {venue.description && (
               <p className="mt-4 leading-relaxed text-muted-foreground">
@@ -118,42 +186,46 @@ export default async function VenuePage({ params }: Props) {
               </p>
             )}
 
-            {/* Features */}
+            {/* Features — consistent card design */}
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {venue.number_of_screens && (
                 <div className="rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Tv className="h-4 w-4 text-brand" />
                     Screens
                   </div>
-                  <div className="mt-1 text-2xl font-bold">
-                    {venue.number_of_screens}
+                  <div className="mt-1 text-sm font-semibold">
+                    {venue.number_of_screens} screens
                   </div>
                 </div>
               )}
               {venue.has_projector && (
                 <div className="rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Tv className="h-4 w-4 text-brand" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Monitor className="h-4 w-4 text-brand" />
                     Projector
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Yes
-                  </div>
+                  <div className="mt-1 text-sm font-semibold">Yes</div>
                 </div>
               )}
               {venue.atmosphere && (
                 <div className="rounded-lg border border-border p-3">
-                  <div className="text-sm font-medium">Atmosphere</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4 text-brand" />
+                    Atmosphere
+                  </div>
+                  <div className="mt-1 text-sm font-semibold">
                     {ATMOSPHERE_LABELS[venue.atmosphere] || venue.atmosphere}
                   </div>
                 </div>
               )}
               {venue.price_range && (
                 <div className="rounded-lg border border-border p-3">
-                  <div className="text-sm font-medium">Price range</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="text-brand">$</span>
+                    Price range
+                  </div>
+                  <div className="mt-1 text-sm font-semibold">
                     {venue.price_range}{" "}
                     {PRICE_LABELS[venue.price_range] &&
                       `(${PRICE_LABELS[venue.price_range]})`}
@@ -162,34 +234,30 @@ export default async function VenuePage({ params }: Props) {
               )}
               {venue.has_food && (
                 <div className="rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Utensils className="h-4 w-4 text-brand" />
                     Food
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Available
-                  </div>
+                  <div className="mt-1 text-sm font-semibold">Available</div>
                 </div>
               )}
               {venue.has_outdoor_area && (
                 <div className="rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TreePine className="h-4 w-4 text-brand" />
-                    Outdoor
+                    Outdoor area
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Yes
-                  </div>
+                  <div className="mt-1 text-sm font-semibold">Yes</div>
                 </div>
               )}
             </div>
 
-            {/* Leagues */}
-            {venue.venue_leagues && venue.venue_leagues.length > 0 && (
+            {/* Leagues — split into confirmed vs also shows */}
+            {confirmedLeagues && confirmedLeagues.length > 0 && (
               <section className="mt-8">
-                <h2 className="text-lg font-bold">Leagues shown</h2>
+                <h2 className="text-lg font-bold">What&apos;s on</h2>
                 <div className="mt-3 space-y-2">
-                  {venue.venue_leagues.map((vl) => (
+                  {confirmedLeagues.map((vl) => (
                     <div
                       key={vl.id}
                       className="flex items-center justify-between rounded-lg border border-border p-3"
@@ -215,6 +283,24 @@ export default async function VenuePage({ params }: Props) {
                     </div>
                   ))}
                 </div>
+                {otherLeagues && otherLeagues.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Also reported to show
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {otherLeagues.map((vl) => (
+                        <Link
+                          key={vl.id}
+                          href={`/watch/${vl.league?.slug}`}
+                          className="rounded-md border border-border px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:border-brand hover:text-brand"
+                        >
+                          {vl.league?.short_name || vl.league?.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </section>
             )}
 
@@ -265,51 +351,113 @@ export default async function VenuePage({ params }: Props) {
                 </div>
               </section>
             )}
+
+            {/* Nearby venues */}
+            {nearbyVenues.length > 0 && (
+              <section className="mt-8">
+                <h2 className="text-lg font-bold">Other venues nearby</h2>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {nearbyVenues.map((nearby) => (
+                    <Link
+                      key={nearby.id}
+                      href={`/venues/${nearby.slug}`}
+                      className="group rounded-lg border border-border p-4 transition-all hover:border-brand hover:shadow-sm"
+                    >
+                      <h3 className="font-semibold group-hover:text-brand">
+                        {nearby.name}
+                      </h3>
+                      {nearby.address && (
+                        <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{nearby.address}</span>
+                        </p>
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        {nearby.number_of_screens && (
+                          <span className="flex items-center gap-1">
+                            <Tv className="h-3.5 w-3.5" />
+                            {nearby.number_of_screens} screens
+                          </span>
+                        )}
+                        {nearby.google_rating && (
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            {nearby.google_rating}
+                          </span>
+                        )}
+                      </div>
+                      {nearby.venue_leagues &&
+                        nearby.venue_leagues.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {nearby.venue_leagues.slice(0, 4).map((vl) => (
+                              <span
+                                key={vl.id}
+                                className="rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground"
+                              >
+                                {vl.league?.short_name || vl.league?.name}
+                              </span>
+                            ))}
+                            {nearby.venue_leagues.length > 4 && (
+                              <span className="rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
+                                +{nearby.venue_leagues.length - 4}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Sidebar */}
           <div>
             <div className="sticky top-20 space-y-4">
               {/* Links */}
-              <div className="rounded-xl border border-border p-4">
-                <h3 className="font-semibold">Links</h3>
-                <div className="mt-3 space-y-2">
-                  {venue.website_url && (
-                    <a
-                      href={venue.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-brand hover:underline"
-                    >
-                      <Globe className="h-4 w-4" />
-                      Website
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                  {venue.instagram_handle && (
-                    <a
-                      href={`https://instagram.com/${venue.instagram_handle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-brand hover:underline"
-                    >
-                      Instagram
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                  {venue.facebook_url && (
-                    <a
-                      href={venue.facebook_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-brand hover:underline"
-                    >
-                      Facebook
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
+              {(venue.website_url ||
+                venue.instagram_handle ||
+                venue.facebook_url) && (
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="font-semibold">Links</h3>
+                  <div className="mt-3 space-y-2">
+                    {venue.website_url && (
+                      <a
+                        href={venue.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-brand hover:underline"
+                      >
+                        <Globe className="h-4 w-4" />
+                        Website
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                    {venue.instagram_handle && (
+                      <a
+                        href={`https://instagram.com/${venue.instagram_handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-brand hover:underline"
+                      >
+                        Instagram
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                    {venue.facebook_url && (
+                      <a
+                        href={venue.facebook_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-brand hover:underline"
+                      >
+                        Facebook
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Location */}
               <div className="rounded-xl border border-border p-4">
@@ -320,7 +468,7 @@ export default async function VenuePage({ params }: Props) {
                   </p>
                 )}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.name + (venue.address ? ', ' + venue.address : ''))}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.name + (venue.address ? ", " + venue.address : ""))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-brand bg-brand/5 px-4 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand/10"

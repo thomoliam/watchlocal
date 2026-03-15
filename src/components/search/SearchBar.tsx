@@ -163,7 +163,27 @@ export default function SearchBar({
     router.push(item.href);
   }
 
+  function handleSubmit() {
+    if (activeIndex >= 0 && results[activeIndex]) {
+      navigate(results[activeIndex]);
+    } else if (results.length > 0) {
+      navigate(results[0]);
+    } else {
+      // Try compound query parsing as a fallback
+      const compound = parseCompoundQuery(query);
+      if (compound) {
+        navigate(compound);
+      }
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSubmit();
+      return;
+    }
+
     if (!isOpen) return;
 
     if (e.key === "ArrowDown") {
@@ -172,9 +192,6 @@ export default function SearchBar({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter" && activeIndex >= 0) {
-      e.preventDefault();
-      navigate(results[activeIndex]);
     } else if (e.key === "Escape") {
       setIsOpen(false);
     }
@@ -208,6 +225,8 @@ export default function SearchBar({
           }`}
         />
         <button
+          type="button"
+          onClick={handleSubmit}
           className={`rounded-lg bg-brand font-medium text-white transition-opacity hover:opacity-90 ${
             isLarge ? "px-6 py-3 text-sm" : "px-4 py-2 text-sm"
           }`}
@@ -223,6 +242,7 @@ export default function SearchBar({
             const Icon = ICON_MAP[item.type];
             return (
               <button
+                type="button"
                 key={item.href + i}
                 onClick={() => navigate(item)}
                 onMouseEnter={() => setActiveIndex(i)}
