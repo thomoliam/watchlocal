@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Trophy, MapPin, Tv, Users, Combine } from "lucide-react";
+import { Trophy, MapPin, Tv, Users } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import {
