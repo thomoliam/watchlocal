@@ -362,6 +362,69 @@ export async function searchCities(query: string): Promise<City[]> {
 }
 
 // ============================================================
+// LEAGUE HUB
+// ============================================================
+
+export async function getTopLeagueSlugs(limit: number = 20): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("leagues")
+    .select("slug")
+    .eq("is_active", true)
+    .order("tier", { ascending: true })
+    .limit(limit);
+  return (data || []).map((row) => row.slug);
+}
+
+// ============================================================
+// CROSS-LINKING
+// ============================================================
+
+/** Other leagues that have venues in the same city */
+export async function getOtherLeaguesInCity(
+  citySlug: string,
+  excludeLeagueSlug: string
+): Promise<{ league_slug: string; league_name: string; venue_count: number }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("page_combos")
+    .select("league_slug, league_name, venue_count")
+    .eq("city_slug", citySlug)
+    .neq("league_slug", excludeLeagueSlug)
+    .gt("venue_count", 0)
+    .order("venue_count", { ascending: false });
+
+  const seen = new Set<string>();
+  return ((data || []) as any[]).filter((row) => {
+    if (seen.has(row.league_slug)) return false;
+    seen.add(row.league_slug);
+    return true;
+  });
+}
+
+/** Other cities that have venues for the same league */
+export async function getOtherCitiesForLeague(
+  leagueSlug: string,
+  excludeCitySlug: string
+): Promise<{ city_slug: string; city_name: string; city_country: string; venue_count: number }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("page_combos")
+    .select("city_slug, city_name, city_country, venue_count")
+    .eq("league_slug", leagueSlug)
+    .neq("city_slug", excludeCitySlug)
+    .gt("venue_count", 0)
+    .order("venue_count", { ascending: false });
+
+  const seen = new Set<string>();
+  return ((data || []) as any[]).filter((row) => {
+    if (seen.has(row.city_slug)) return false;
+    seen.add(row.city_slug);
+    return true;
+  });
+}
+
+// ============================================================
 // PAGE GENERATION
 // ============================================================
 

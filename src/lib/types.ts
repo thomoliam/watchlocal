@@ -7,6 +7,8 @@ export interface League {
   country: string | null;
   logo_url: string | null;
   tier: number;
+  description: string | null;
+  is_active: boolean;
 }
 
 export interface Team {

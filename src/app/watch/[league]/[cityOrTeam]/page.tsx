@@ -14,6 +14,8 @@ import {
   getTeamBySlug,
   getVenuesForLeagueInCity,
   getCitiesWithVenuesForLeague,
+  getOtherLeaguesInCity,
+  getOtherCitiesForLeague,
 } from "@/lib/supabase/queries";
 import {
   generateLeagueCityMeta,
@@ -106,7 +108,11 @@ export default async function LeagueCityOrTeamPage({ params }: Props) {
 }
 
 async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
-  const venues = await getVenuesForLeagueInCity(leagueSlug, city.slug);
+  const [venues, otherLeagues, otherCities] = await Promise.all([
+    getVenuesForLeagueInCity(leagueSlug, city.slug),
+    getOtherLeaguesInCity(city.slug, leagueSlug),
+    getOtherCitiesForLeague(leagueSlug, city.slug),
+  ]);
   const faqs = generateFAQs(
     league.name,
     city.name,
@@ -114,6 +120,37 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
     city.timezone,
     city.country
   );
+
+  // Build intro paragraph
+  const topVenue = venues.length > 0 ? venues[0] : null;
+  const introText =
+    venues.length > 0
+      ? (() => {
+          const parts = [
+            `There ${venues.length === 1 ? "is" : "are"} ${venues.length} verified sports bar${venues.length !== 1 ? "s" : ""} in ${city.name} showing ${league.name} matches live.`,
+          ];
+          if (topVenue) {
+            const addressSnippet = topVenue.address
+              ? ` on ${topVenue.address.split(",")[0]}`
+              : "";
+            const screensPart =
+              topVenue.number_of_screens
+                ? `, with ${topVenue.number_of_screens} screens`
+                : "";
+            const ratingPart =
+              topVenue.google_rating
+                ? ` and a ${topVenue.google_rating} Google rating`
+                : "";
+            parts.push(
+              `${topVenue.name}${addressSnippet} is the most popular${screensPart}${ratingPart}.`
+            );
+          }
+          parts.push(
+            `All venues listed below have been verified to show ${league.name} in the current season.`
+          );
+          return parts.join(" ");
+        })()
+      : null;
 
   return (
     <>
@@ -147,11 +184,18 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
           <h1 className="text-3xl font-bold">
             Where to watch {league.name} in {city.name}
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            {venues.length > 0
-              ? `${venues.length} verified venue${venues.length !== 1 ? "s" : ""} showing ${league.short_name} in ${city.name}, ${city.country}.`
-              : `No venues listed yet for ${league.short_name} in ${city.name}.`}
-          </p>
+
+          {/* Intro paragraph for AI search pickup */}
+          {introText ? (
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              {introText}
+            </p>
+          ) : (
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              We&apos;re still building our list of {league.name} venues in{" "}
+              {city.name}. Know a great spot? Submit it below.
+            </p>
+          )}
         </div>
 
         {venues.length > 0 ? (
@@ -183,6 +227,59 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
             <FAQSection faqs={faqs} />
           </div>
         </section>
+
+        {/* Cross-linking: Other leagues in this city */}
+        {otherLeagues.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-bold">
+              Other leagues in {city.name}
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {otherLeagues.map((ol) => (
+                <Link
+                  key={ol.league_slug}
+                  href={`/watch/${ol.league_slug}/${city.slug}`}
+                  className="group flex items-center justify-between rounded-xl border border-border p-4 transition-all hover:border-blue-600 hover:shadow-md dark:hover:border-blue-500"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{ol.league_name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {ol.venue_count} venue{ol.venue_count !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  <ChevronRight className="ml-2 h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Cross-linking: This league in other cities */}
+        {otherCities.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-bold">
+              Watch {league.name} in other cities
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {otherCities.map((oc) => (
+                <Link
+                  key={oc.city_slug}
+                  href={`/watch/${leagueSlug}/${oc.city_slug}`}
+                  className="group flex items-center gap-3 rounded-xl border border-border p-4 transition-all hover:border-blue-600 hover:shadow-md dark:hover:border-blue-500"
+                >
+                  <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-500" />
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{oc.city_name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {oc.city_country} &middot; {oc.venue_count} venue{oc.venue_count !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </>

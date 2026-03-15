@@ -12,6 +12,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/search/SearchBar";
 import SuggestedLeagues from "@/components/home/SuggestedLeagues";
+import JsonLd from "@/components/seo/JsonLd";
 
 const SAMPLE_LEAGUES = [
   { name: "Premier League", emoji: "⚽", slug: "premier-league" },
@@ -79,6 +80,30 @@ const SAMPLE_VENUES = [
 export default function Home() {
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "WatchLocal",
+          url: "https://watchlocal.co",
+          potentialAction: {
+            "@type": "SearchAction",
+            target:
+              "https://watchlocal.co/search?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "WatchLocal",
+          url: "https://watchlocal.co",
+          description:
+            "Find the best sports bars and venues to watch live sport anywhere in the world.",
+        }}
+      />
       <Header />
       <main>
         {/* Hero */}
