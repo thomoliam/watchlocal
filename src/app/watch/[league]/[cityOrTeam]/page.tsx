@@ -20,6 +20,7 @@ import {
 import {
   generateLeagueCityMeta,
   generateFAQs,
+  generateLeagueCityFAQs,
   generateFAQSchema,
   generateVenueListSchema,
   generateBreadcrumbSchema,
@@ -113,12 +114,14 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
     getOtherLeaguesInCity(city.slug, leagueSlug),
     getOtherCitiesForLeague(leagueSlug, city.slug),
   ]);
-  const faqs = generateFAQs(
+  const topVenueName = venues.length > 0 ? venues[0].name : undefined;
+  const faqs = generateLeagueCityFAQs(
     league.name,
     city.name,
-    league.name,
+    city.country,
     city.timezone,
-    city.country
+    venues.length,
+    topVenueName
   );
 
   // Build intro paragraph

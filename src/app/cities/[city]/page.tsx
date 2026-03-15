@@ -67,11 +67,19 @@ export default async function CityPage({ params }: Props) {
           <h1 className="text-3xl font-bold">
             Sports bars in {city.name}
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            {venues.length > 0
-              ? `${venues.length} venue${venues.length !== 1 ? "s" : ""} in ${city.name}, ${city.country}. Timezone: ${city.timezone}.`
-              : `No venues listed yet in ${city.name}.`}
-          </p>
+          {venues.length > 0 ? (
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              {city.name} has {venues.length} verified sports bar{venues.length !== 1 ? "s" : ""} for watching live sport.
+              {leagues.length > 0 &&
+                ` Venues in ${city.name} show ${leagues.length} league${leagues.length !== 1 ? "s" : ""} including ${leagues.slice(0, 3).map((l) => l.short_name || l.name).join(", ")}${leagues.length > 3 ? `, and ${leagues.length - 3} more` : ""}.`}
+              {` Local timezone is ${city.timezone}.`}
+              {" All venues listed below have been verified for the current season."}
+            </p>
+          ) : (
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              We&apos;re still building our list of sports bars in {city.name}, {city.country}. Know a great spot? Submit it below.
+            </p>
+          )}
         </div>
 
         {/* Leagues available */}

@@ -54,6 +54,57 @@ export function generateFAQs(
   ];
 }
 
+export function generateLeagueCityFAQs(
+  leagueName: string,
+  cityName: string,
+  country: string,
+  timezone: string,
+  venueCount: number,
+  topVenueName?: string
+) {
+  const faqs = [
+    {
+      question: `Where can I watch ${leagueName} in ${cityName}?`,
+      answer:
+        venueCount > 0
+          ? `There are ${venueCount} verified sports bars in ${cityName} that show ${leagueName} matches live. ${topVenueName ? `${topVenueName} is the most popular choice among fans.` : ""} All venues are verified for the current season.`
+          : `We're building our list of ${leagueName} venues in ${cityName}. Submit a venue if you know one.`,
+    },
+    {
+      question: `What time does ${leagueName} start in ${cityName}?`,
+      answer: `${leagueName} kick-off times in ${cityName} follow the ${timezone} timezone. Depending on the competition round, matches typically start in the evening local time, but exact times vary by fixture. Check each venue's listing for confirmed showtimes.`,
+    },
+    {
+      question: `Which is the best sports bar in ${cityName} for ${leagueName}?`,
+      answer:
+        topVenueName
+          ? `${topVenueName} is one of the top-rated venues for ${leagueName} in ${cityName}. We recommend checking screen counts, atmosphere ratings, and reviews above to find the best fit for your group.`
+          : `Browse our verified listings above — each venue shows screen count, atmosphere, food options, and which leagues they cover. Sort by rating to find the best match.`,
+    },
+    {
+      question: `Do sports bars in ${cityName} show every ${leagueName} match?`,
+      answer: `Coverage varies by venue. Larger sports bars with more screens typically show every match, while smaller venues may prioritise headline fixtures. Check individual venue pages for details or call ahead for less popular games.`,
+    },
+    {
+      question: `Which channel broadcasts ${leagueName} in ${country}?`,
+      answer: `Broadcasting rights for ${leagueName} in ${country} vary by season. All venues listed on WatchLocal are verified to have the correct subscriptions to show ${leagueName} matches live, regardless of the local broadcaster.`,
+    },
+    {
+      question: `Can I book a table to watch ${leagueName} in ${cityName}?`,
+      answer: `Some venues accept reservations for big matches — check the venue's website or call ahead, especially for derby days and knockout rounds. Arriving 30-60 minutes early is recommended for popular fixtures.`,
+    },
+    {
+      question: `Are there ${leagueName} fan groups in ${cityName}?`,
+      answer: `Many cities have supporter groups that meet at specific venues. Check individual venue pages for fan community links, or search for ${leagueName} supporter groups in ${cityName} on Facebook and WhatsApp.`,
+    },
+    {
+      question: `Is there a cover charge to watch ${leagueName} at bars in ${cityName}?`,
+      answer: `Most sports bars in ${cityName} don't charge a cover for watching live sport. Some premium venues may have a minimum spend on match days, especially for big fixtures. Check the price range indicator on each listing.`,
+    },
+  ];
+  return faqs;
+}
+
 export function generateFAQSchema(
   faqs: { question: string; answer: string }[]
 ) {
