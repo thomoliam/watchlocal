@@ -16,6 +16,12 @@ export const SPORT_ICONS: Record<string, string> = {
   "ice-hockey": "🏒",
   boxing: "🥊",
   tennis: "🎾",
+  golf: "⛳",
+  cycling: "🚴",
+  wrestling: "🤼",
+  volleyball: "🏐",
+  "multi-sport": "🏅",
+  "combat-sports": "🥊",
 };
 
 export const PRICE_LABELS: Record<string, string> = {
