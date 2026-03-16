@@ -9,16 +9,16 @@
 -- COMBAT SPORTS
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('ONE Championship', 'ONE', 'one-championship', 'mma', 'Singapore', 'Asia''s largest global sports media property featuring MMA, Muay Thai, kickboxing, and submission grappling. Over 6 billion video views annually.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('ONE Championship', 'ONE', 'one-championship', 'mma', 'Singapore')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Bellator MMA', 'BMMA', 'bellator-mma', 'mma', 'United States', 'Major mixed martial arts promotion and the second-largest MMA organization in the world behind the UFC.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Bellator MMA', 'BMMA', 'bellator-mma', 'mma', 'United States')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('WWE', 'WWE', 'wwe', 'wrestling', 'United States', 'World Wrestling Entertainment. The largest professional wrestling promotion globally with 8% US TV viewership share.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('WWE', 'WWE', 'wwe', 'wrestling', 'United States')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -26,12 +26,12 @@ ON CONFLICT (slug) DO NOTHING;
 -- MOTORSPORT
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('MotoGP', 'MGP', 'motogp', 'motorsport', 'Spain', 'The premier class of motorcycle road racing. Over 2.5 billion video views annually across 20+ Grand Prix races worldwide.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('MotoGP', 'MGP', 'motogp', 'motorsport', 'Spain')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('NASCAR', 'NASCAR', 'nascar', 'motorsport', 'United States', 'The National Association for Stock Car Auto Racing. America''s most popular motorsport series with the Cup Series as its top competition.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('NASCAR', 'NASCAR', 'nascar', 'motorsport', 'United States')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -39,16 +39,16 @@ ON CONFLICT (slug) DO NOTHING;
 -- GOLF
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('PGA Tour', 'PGA', 'pga-tour', 'golf', 'United States', 'The premier professional golf tour in the world, organizing the majority of top-tier men''s golf tournaments.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('PGA Tour', 'PGA', 'pga-tour', 'golf', 'United States')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('The Masters', 'MSTR', 'the-masters', 'golf', 'United States', 'The first of golf''s four major championships held annually at Augusta National Golf Club. One of the most prestigious events in sport.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('The Masters', 'MSTR', 'the-masters', 'golf', 'United States')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('The Open Championship', 'OPEN', 'the-open-championship', 'golf', 'United Kingdom', 'The oldest of the four major golf championships, played on links courses in the UK. Also known as the British Open.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('The Open Championship', 'OPEN', 'the-open-championship', 'golf', 'United Kingdom')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -56,20 +56,20 @@ ON CONFLICT (slug) DO NOTHING;
 -- TENNIS (Individual Grand Slams)
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Wimbledon', 'WIM', 'wimbledon', 'tennis', 'United Kingdom', 'The oldest and most prestigious tennis tournament in the world, held annually at the All England Club on grass courts.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Wimbledon', 'WIM', 'wimbledon', 'tennis', 'United Kingdom')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('US Open Tennis', 'USO', 'us-open-tennis', 'tennis', 'United States', 'Annual Grand Slam tennis tournament held in New York City. Known for its electric atmosphere and hard-court action.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('US Open Tennis', 'USO', 'us-open-tennis', 'tennis', 'United States')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Australian Open', 'AO', 'australian-open', 'tennis', 'Australia', 'The first Grand Slam of the year, held in Melbourne. Known as the Happy Slam for its relaxed Australian atmosphere.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Australian Open', 'AO', 'australian-open', 'tennis', 'Australia')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Roland Garros', 'RG', 'roland-garros', 'tennis', 'France', 'The French Open, the only Grand Slam played on clay courts. Held annually at Stade Roland Garros in Paris.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Roland Garros', 'RG', 'roland-garros', 'tennis', 'France')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -77,8 +77,8 @@ ON CONFLICT (slug) DO NOTHING;
 -- CYCLING
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Tour de France', 'TDF', 'tour-de-france', 'cycling', 'France', 'The most famous and prestigious cycling race in the world. A three-week Grand Tour held annually in France and nearby countries.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Tour de France', 'TDF', 'tour-de-france', 'cycling', 'France')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -86,20 +86,20 @@ ON CONFLICT (slug) DO NOTHING;
 -- EUROPEAN FOOTBALL - Additional Leagues
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('La Liga 2', 'LL2', 'la-liga-2', 'football', 'Spain', 'The second division of Spanish football. A competitive league serving as the pathway to La Liga.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('La Liga 2', 'LL2', 'la-liga-2', 'football', 'Spain')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Eredivisie', 'ERE', 'eredivisie', 'football', 'Netherlands', 'The top tier of Dutch football known for its attacking philosophy and producing world-class talent.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Eredivisie', 'ERE', 'eredivisie', 'football', 'Netherlands')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Primeira Liga', 'PL', 'primeira-liga', 'football', 'Portugal', 'The top division of Portuguese football featuring historic clubs like Benfica, Porto, and Sporting CP.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Primeira Liga', 'PL', 'primeira-liga', 'football', 'Portugal')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Scottish Premiership', 'SPFL', 'scottish-premiership', 'football', 'Scotland', 'The top flight of Scottish football dominated by the historic Old Firm rivalry between Celtic and Rangers.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Scottish Premiership', 'SPFL', 'scottish-premiership', 'football', 'Scotland')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -107,28 +107,28 @@ ON CONFLICT (slug) DO NOTHING;
 -- ASIAN & OCEANIAN FOOTBALL
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('A-League', 'ALM', 'a-league', 'football', 'Australia', 'Australia''s top professional men''s football league featuring clubs from across Australia and New Zealand.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('A-League', 'ALM', 'a-league', 'football', 'Australia')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('J-League', 'J1', 'j-league', 'football', 'Japan', 'Japan''s top professional football league. Known for passionate supporters and high-quality football in Asia.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('J-League', 'J1', 'j-league', 'football', 'Japan')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('K League', 'KL', 'k-league', 'football', 'South Korea', 'South Korea''s top professional football league and one of the strongest leagues in Asian football.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('K League', 'KL', 'k-league', 'football', 'South Korea')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Chinese Super League', 'CSL', 'chinese-super-league', 'football', 'China', 'The top division of Chinese football. The most-watched domestic football league in Asia by total viewers.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Chinese Super League', 'CSL', 'chinese-super-league', 'football', 'China')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Indian Super League', 'ISL', 'indian-super-league', 'football', 'India', 'India''s premier football league launched in 2013. Growing rapidly alongside India''s massive sports audience.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Indian Super League', 'ISL', 'indian-super-league', 'football', 'India')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Saudi Pro League', 'SPL', 'saudi-pro-league', 'football', 'Saudi Arabia', 'The top division of Saudi football. Home to major global stars following huge investment and high-profile transfers.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Saudi Pro League', 'SPL', 'saudi-pro-league', 'football', 'Saudi Arabia')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -136,12 +136,12 @@ ON CONFLICT (slug) DO NOTHING;
 -- SOUTH AMERICAN FOOTBALL
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Copa Libertadores', 'LIB', 'copa-libertadores', 'football', 'South America', 'South America''s premier club competition, equivalent to the UEFA Champions League. Renowned for its intense atmosphere.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Copa Libertadores', 'LIB', 'copa-libertadores', 'football', 'South America')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Copa America', 'CA', 'copa-america', 'football', 'South America', 'The oldest international continental football competition in the world. Held every four years featuring South American and invited nations.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Copa America', 'CA', 'copa-america', 'football', 'South America')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -149,12 +149,12 @@ ON CONFLICT (slug) DO NOTHING;
 -- INTERNATIONAL FOOTBALL
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('UEFA European Championship', 'EURO', 'euro-championship', 'football', 'Europe', 'The quadrennial European international football championship. One of the most-watched sporting events globally.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('UEFA European Championship', 'EURO', 'euro-championship', 'football', 'Europe')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('FIFA World Cup', 'WC', 'fifa-world-cup', 'football', 'International', 'The biggest single-sport event in the world, held every four years. Over 3.5 billion viewers for the final.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('FIFA World Cup', 'WC', 'fifa-world-cup', 'football', 'International')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -162,16 +162,16 @@ ON CONFLICT (slug) DO NOTHING;
 -- CRICKET - Additional Competitions
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Cricket World Cup', 'CWC', 'cricket-world-cup', 'cricket', 'International', 'The ICC Cricket World Cup, the premier international championship of men''s One Day International cricket.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Cricket World Cup', 'CWC', 'cricket-world-cup', 'cricket', 'International')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('The Hundred', '100', 'the-hundred', 'cricket', 'United Kingdom', 'A 100-ball cricket competition featuring city-based teams across England and Wales. Innovative fast-paced format launched in 2021.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('The Hundred', '100', 'the-hundred', 'cricket', 'United Kingdom')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Big Bash League', 'BBL', 'big-bash-league', 'cricket', 'Australia', 'Australia''s premier Twenty20 cricket competition. Known for exciting cricket and family-friendly entertainment during the Australian summer.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Big Bash League', 'BBL', 'big-bash-league', 'cricket', 'Australia')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -179,16 +179,16 @@ ON CONFLICT (slug) DO NOTHING;
 -- RUGBY - Additional Competitions
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Rugby Championship', 'RC', 'rugby-championship', 'rugby-union', 'International', 'The annual southern hemisphere rugby union competition between New Zealand, South Africa, Australia, and Argentina.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Rugby Championship', 'RC', 'rugby-championship', 'rugby-union', 'International')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Top 14', 'T14', 'top-14', 'rugby-union', 'France', 'The premier French rugby union club competition. One of the richest and most competitive domestic rugby leagues in the world.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Top 14', 'T14', 'top-14', 'rugby-union', 'France')
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Premiership Rugby', 'PREM', 'premiership-rugby', 'rugby-union', 'England', 'The top tier of English rugby union featuring historic clubs. One of the most competitive domestic rugby leagues globally.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Premiership Rugby', 'PREM', 'premiership-rugby', 'rugby-union', 'England')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -196,8 +196,8 @@ ON CONFLICT (slug) DO NOTHING;
 -- VOLLEYBALL
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Volleyball Nations League', 'VNL', 'volleyball-nations-league', 'volleyball', 'International', 'The premier annual international volleyball competition for both men and women, organized by FIVB.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Volleyball Nations League', 'VNL', 'volleyball-nations-league', 'volleyball', 'International')
 ON CONFLICT (slug) DO NOTHING;
 
 
@@ -205,8 +205,8 @@ ON CONFLICT (slug) DO NOTHING;
 -- MULTI-SPORT EVENTS
 -- ============================================================
 
-INSERT INTO leagues (name, short_name, slug, sport, country, description)
-VALUES ('Olympic Games', 'OLY', 'olympic-games', 'multi-sport', 'International', 'The Summer Olympic Games. The world''s foremost multi-sport event with 35% US viewership share and billions of global viewers.')
+INSERT INTO leagues (name, short_name, slug, sport, country)
+VALUES ('Olympic Games', 'OLY', 'olympic-games', 'multi-sport', 'International')
 ON CONFLICT (slug) DO NOTHING;
 
 
