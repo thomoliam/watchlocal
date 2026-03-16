@@ -8,7 +8,7 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-brand-dark bg-brand-dark text-white">
+    <footer className="bg-[#1e3a5f] text-white">
       <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           {/* Sports */}
