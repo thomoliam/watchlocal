@@ -703,7 +703,7 @@ export async function getSiteStats(): Promise<{
 // ============================================================
 
 export async function getAllSports(): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("leagues")
     .select("sport")
