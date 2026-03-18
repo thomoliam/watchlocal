@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "watchlocal",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["-e", "const h=require('http');h.createServer((q,s)=>{const p=h.request({hostname:'127.0.0.1',port:3001,path:q.url,method:q.method,headers:q.headers},r=>{s.writeHead(r.statusCode,r.headers);r.pipe(s)});q.pipe(p);p.on('error',()=>{s.writeHead(502);s.end()})}).listen(3000)"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 3000
     }
   ]

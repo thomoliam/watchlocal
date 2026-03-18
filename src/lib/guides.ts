@@ -2,14 +2,24 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface GuideFrontmatter {
   title: string;
   description: string;
-  category: "City Guide" | "League Guide" | "Event Guide";
+  category: "City Guide" | "League Guide" | "Event Guide" | "Expat Guide";
+  tags?: string[];
   heroImage?: string;
   publishedAt: string;
   updatedAt: string;
   author: string;
+  /** Optional FAQ items — emitted as FAQPage JSON-LD and rendered at end of article */
+  faq?: FaqItem[];
+  /** Higher = shown first in the index (default 0) */
+  priority?: number;
 }
 
 export interface GuideEntry {
@@ -37,11 +47,17 @@ export function getAllGuides(): GuideEntry[] {
         frontmatter: data as GuideFrontmatter,
       };
     })
-    .sort(
-      (a, b) =>
+    .sort((a, b) => {
+      // Priority guides float to the top (higher number = higher priority)
+      const aPri = a.frontmatter.priority ?? 0;
+      const bPri = b.frontmatter.priority ?? 0;
+      if (bPri !== aPri) return bPri - aPri;
+      // Then newest first
+      return (
         new Date(b.frontmatter.publishedAt).getTime() -
         new Date(a.frontmatter.publishedAt).getTime()
-    );
+      );
+    });
 }
 
 export function getGuideBySlug(slug: string): Guide | null {

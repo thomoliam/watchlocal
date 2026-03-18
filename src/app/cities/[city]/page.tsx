@@ -1,14 +1,18 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Tv, ChevronRight } from "lucide-react";
+import { Tv, ChevronRight, MapPin } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import VenueCard from "@/components/venues/VenueCard";
 import VenueFilters from "@/components/venues/VenueFilters";
+import NearestVenueFinder from "@/components/venues/NearestVenueFinder";
+import JsonLd from "@/components/seo/JsonLd";
 import { getCityBySlug, getVenuesInCity } from "@/lib/supabase/queries";
 import { SPORT_ICONS, SITE_URL } from "@/lib/constants";
+import { getNeighbourhoods } from "@/lib/neighbourhoods";
+import { VENUE_FEATURES } from "@/lib/venue-features";
 
 interface Props {
   params: Promise<{ city: string }>;
@@ -46,6 +50,7 @@ export default async function CityPage({ params }: Props) {
   if (!city) notFound();
 
   const venues = await getVenuesInCity(citySlug);
+  const neighbourhoods = getNeighbourhoods(citySlug);
 
   // Extract unique leagues from venues
   const leagueMap = new Map<string, { name: string; slug: string; sport: string; short_name: string }>();
@@ -58,9 +63,95 @@ export default async function CityPage({ params }: Props) {
   }
   const leagues = Array.from(leagueMap.values());
 
+  // Compute aggregate rating from Google ratings
+  const ratedVenues = venues.filter((v) => v.google_rating && v.google_review_count);
+  const totalReviews = ratedVenues.reduce((sum, v) => sum + (v.google_review_count || 0), 0);
+  const avgRating =
+    ratedVenues.length > 0
+      ? ratedVenues.reduce((sum, v) => sum + (v.google_rating || 0) * (v.google_review_count || 1), 0) /
+        Math.max(totalReviews, 1)
+      : null;
+
+  // City JSON-LD schema
+  const citySchema = {
+    "@context": "https://schema.org",
+    "@type": "City",
+    name: city.name,
+    url: `${SITE_URL}/cities/${citySlug}`,
+    ...(city.latitude && city.longitude
+      ? {
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: city.latitude,
+            longitude: city.longitude,
+          },
+        }
+      : {}),
+    ...(venues.length > 0 && avgRating && totalReviews > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: Math.round(avgRating * 10) / 10,
+            reviewCount: totalReviews,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+  };
+
+  // ItemList schema for top venues
+  const venueListSchema =
+    venues.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: `Sports bars in ${city.name}`,
+          description: `The best sports bars in ${city.name} for watching live sport`,
+          numberOfItems: venues.length,
+          itemListElement: venues.slice(0, 10).map((venue, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: venue.name,
+            url: `${SITE_URL}/venues/${venue.slug}`,
+            item: {
+              "@type": "BarOrPub",
+              name: venue.name,
+              url: `${SITE_URL}/venues/${venue.slug}`,
+              ...(venue.address ? { address: venue.address } : {}),
+              ...(venue.google_rating
+                ? {
+                    aggregateRating: {
+                      "@type": "AggregateRating",
+                      ratingValue: venue.google_rating,
+                      reviewCount: venue.google_review_count || 1,
+                      bestRating: 5,
+                      worstRating: 1,
+                    },
+                  }
+                : {}),
+            },
+          })),
+        }
+      : null;
+
+  // Breadcrumb schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Cities", item: `${SITE_URL}/cities` },
+      { "@type": "ListItem", position: 3, name: city.name, item: `${SITE_URL}/cities/${citySlug}` },
+    ],
+  };
+
   return (
     <>
       <Header />
+      <JsonLd data={citySchema} />
+      {venueListSchema && <JsonLd data={venueListSchema} />}
+      <JsonLd data={breadcrumbSchema} />
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Breadcrumbs items={[{ label: "Cities" }, { label: city.name }]} />
 
@@ -102,6 +193,36 @@ export default async function CityPage({ params }: Props) {
           </section>
         )}
 
+        {/* Feature filters */}
+        {venues.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-lg font-bold">Filter by feature</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.values(VENUE_FEATURES).map((feature) => (
+                <Link
+                  key={feature.slug}
+                  href={`/cities/${citySlug}/${feature.slug}`}
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:border-brand hover:bg-brand hover:text-white"
+                >
+                  <span>{feature.icon}</span>
+                  {feature.name}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Find nearest venue */}
+        <section className="mt-8 rounded-xl border border-border bg-muted px-6 py-8 text-center">
+          <h2 className="text-lg font-semibold">Find the nearest sports bar to you</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Share your location and we&apos;ll find the closest venue in {city.name} instantly.
+          </p>
+          <div className="mt-5">
+            <NearestVenueFinder />
+          </div>
+        </section>
+
         {/* Venues */}
         {venues.length > 0 ? (
           <div className="mt-8">
@@ -119,6 +240,32 @@ export default async function CityPage({ params }: Props) {
               Submit a venue
             </Link>
           </div>
+        )}
+
+        {/* Neighbourhoods cross-links */}
+        {neighbourhoods.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-bold">
+              Browse {city.name} by neighbourhood
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Find sports bars in a specific area of {city.name}.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {neighbourhoods.map((n) => (
+                <Link
+                  key={n.slug}
+                  href={`/cities/${citySlug}/${n.slug}`}
+                  className="group flex items-center gap-2 rounded-xl border border-border bg-background p-4 transition-all hover:border-brand hover:shadow-md"
+                >
+                  <MapPin className="h-4 w-4 shrink-0 text-brand" />
+                  <span className="truncate font-medium group-hover:text-brand">
+                    {n.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
       </main>
       <Footer />

@@ -7,13 +7,22 @@ import {
   Search,
   ChevronRight,
   CheckCircle,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/search/SearchBar";
 import SuggestedLeagues from "@/components/home/SuggestedLeagues";
 import JsonLd from "@/components/seo/JsonLd";
-import { getLeagues, getAllCities } from "@/lib/supabase/queries";
+import NearestVenueFinder from "@/components/venues/NearestVenueFinder";
+import {
+  getLeagues,
+  getAllCities,
+  getSiteStats,
+  getAllUpcomingFixtures,
+  getFeaturedVenues,
+} from "@/lib/supabase/queries";
 import { SPORT_ICONS } from "@/lib/constants";
 
 // Revalidate homepage every 60 minutes
@@ -25,7 +34,8 @@ const FEATURED_CITIES = [
   "amsterdam", "tokyo",
 ];
 
-const FEATURED_VENUES = [
+// Fallback venues shown when DB has no verified venues yet
+const FALLBACK_VENUES = [
   {
     name: "The Sportsman Bar & Restaurant",
     city: "Bangkok",
@@ -43,8 +53,7 @@ const FEATURED_VENUES = [
     rating: 4.5,
     leagues: ["NRL", "Rugby", "AFL"],
     slug: "the-kiwi-bangkok",
-    description:
-      "Kiwi-run pub with strong rugby coverage. Sunday carvery for 395 baht.",
+    description: "Kiwi-run pub with strong rugby coverage. Sunday carvery for 395 baht.",
   },
   {
     name: "Nirvana Sports Bar",
@@ -53,18 +62,20 @@ const FEATURED_VENUES = [
     rating: 4.6,
     leagues: ["AFL", "NRL", "EPL", "F1"],
     slug: "nirvana-seminyak-bali",
-    description:
-      "Premium sports bar in Seminyak. Best venue in Bali for Aussie sports.",
+    description: "Premium sports bar in Seminyak. Best venue in Bali for Aussie sports.",
   },
 ];
 
 export default async function Home() {
-  const [leagues, allCities] = await Promise.all([
-    getLeagues(),
-    getAllCities(),
-  ]);
+  const [leagues, allCities, stats, upcomingFixtures, featuredVenues] =
+    await Promise.all([
+      getLeagues(),
+      getAllCities(),
+      getSiteStats(),
+      getAllUpcomingFixtures(12),
+      getFeaturedVenues(3),
+    ]);
 
-  // Pick top leagues (by tier) and featured cities
   const topLeagues = leagues.slice(0, 12);
   const featuredCities = FEATURED_CITIES
     .map((slug) => allCities.find((c) => c.slug === slug))
@@ -80,8 +91,7 @@ export default async function Home() {
           url: "https://watchlocal.co",
           potentialAction: {
             "@type": "SearchAction",
-            target:
-              "https://watchlocal.co/search?q={search_term_string}",
+            target: "https://watchlocal.co/search?q={search_term_string}",
             "query-input": "required name=search_term_string",
           },
         }}
@@ -92,8 +102,18 @@ export default async function Home() {
           "@type": "Organization",
           name: "WatchLocal",
           url: "https://watchlocal.co",
+          logo: "https://watchlocal.co/logo.png",
           description:
-            "Find the best sports bars and venues to watch live sport anywhere in the world.",
+            "WatchLocal is the world's most comprehensive directory of sports bars for expats and travellers. Find verified venues showing your sport in over 1,100 cities worldwide — from Bangkok to Barcelona, Bali to Buenos Aires.",
+          foundingDate: "2025",
+          knowsAbout: [
+            "sports bars",
+            "watching live sport abroad",
+            "expat sports bars",
+            "Premier League bars worldwide",
+            "AFL bars abroad",
+            "sports venues for travellers",
+          ],
         }}
       />
       <Header />
@@ -144,8 +164,83 @@ export default async function Home() {
         {/* Suggested for you (geo-detected) */}
         <SuggestedLeagues />
 
+        {/* Upcoming matches */}
+        {upcomingFixtures.length > 0 && (
+          <section className="border-t border-border bg-muted">
+            <div className="mx-auto max-w-6xl px-4 py-16">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Upcoming matches</h2>
+                  <p className="mt-1 text-muted-foreground">
+                    Find a sports bar showing these fixtures.
+                  </p>
+                </div>
+                <Link
+                  href="/matches"
+                  className="hidden items-center gap-1 text-sm font-medium text-brand hover:underline sm:flex"
+                >
+                  All fixtures <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {upcomingFixtures.map((fixture) => {
+                  const matchDate = new Date(fixture.match_date);
+                  const dateStr = matchDate.toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  });
+                  const timeStr = matchDate.toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZoneName: "short",
+                  });
+                  const leagueSlug = (fixture.league as any)?.slug;
+                  const sport = (fixture.league as any)?.sport;
+                  return (
+                    <Link
+                      key={fixture.id}
+                      href={leagueSlug ? `/matches/${leagueSlug}/${fixture.id}` : "#"}
+                      className="group flex flex-col gap-2 rounded-xl border border-border bg-background p-4 transition-all hover:border-brand hover:shadow-md"
+                    >
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{SPORT_ICONS[sport] || "🏆"}</span>
+                        <span>
+                          {(fixture.league as any)?.short_name ||
+                            (fixture.league as any)?.name}
+                        </span>
+                      </div>
+                      <p className="font-semibold leading-snug group-hover:text-brand">
+                        {fixture.home_team_name} vs {fixture.away_team_name}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {dateStr}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {timeStr}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              <div className="mt-4 sm:hidden">
+                <Link
+                  href="/matches"
+                  className="text-sm font-medium text-brand hover:underline"
+                >
+                  View all fixtures →
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Leagues */}
-        <section className="border-t border-border bg-muted">
+        <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-4 py-16">
             <h2 className="text-2xl font-bold">Browse by league</h2>
             <p className="mt-1 text-muted-foreground">
@@ -168,7 +263,7 @@ export default async function Home() {
             {leagues.length > 12 && (
               <div className="mt-4 text-center">
                 <Link
-                  href="/watch/premier-league"
+                  href="/sports"
                   className="text-sm font-medium text-brand hover:underline"
                 >
                   View all {leagues.length} leagues
@@ -179,19 +274,18 @@ export default async function Home() {
         </section>
 
         {/* Cities */}
-        <section className="border-t border-border">
+        <section className="border-t border-border bg-muted">
           <div className="mx-auto max-w-6xl px-4 py-16">
             <h2 className="text-2xl font-bold">Popular cities</h2>
             <p className="mt-1 text-muted-foreground">
-              Expat hubs and travel destinations with the best sports bar
-              scenes.
+              Expat hubs and travel destinations with the best sports bar scenes.
             </p>
             <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {featuredCities.map((city) => (
                 <Link
                   key={city!.slug}
                   href={`/cities/${city!.slug}`}
-                  className="group flex items-center gap-3 rounded-xl border border-border p-4 transition-all hover:border-brand hover:shadow-md"
+                  className="group flex items-center gap-3 rounded-xl border border-border bg-background p-4 transition-all hover:border-brand hover:shadow-md"
                 >
                   <MapPin className="h-5 w-5 text-brand" />
                   <div>
@@ -208,22 +302,75 @@ export default async function Home() {
         </section>
 
         {/* Featured Venues */}
-        <section className="border-t border-border bg-muted">
+        <section className="border-t border-border">
           <div className="mx-auto max-w-6xl px-4 py-16">
             <h2 className="text-2xl font-bold">Featured venues</h2>
             <p className="mt-1 text-muted-foreground">
               Verified sports bars loved by expats and travellers.
             </p>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {FEATURED_VENUES.map((venue) => (
-                <Link
-                  key={venue.slug}
-                  href={`/venues/${venue.slug}`}
-                  className="group block"
-                >
-                  <div className="rounded-xl border border-border bg-background p-5 transition-all hover:border-brand hover:shadow-md">
-                    <div className="flex items-start justify-between">
-                      <div>
+              {(featuredVenues.length > 0 ? null : FALLBACK_VENUES) === null
+                ? featuredVenues.map((venue) => {
+                    const leagueTags = (venue.venue_leagues || [])
+                      .slice(0, 4)
+                      .map((vl) => vl.league?.short_name || vl.league?.name)
+                      .filter(Boolean) as string[];
+                    return (
+                      <Link
+                        key={venue.slug}
+                        href={`/venues/${venue.slug}`}
+                        className="group block"
+                      >
+                        <div className="rounded-xl border border-border bg-background p-5 transition-all hover:border-brand hover:shadow-md">
+                          <h3 className="font-semibold group-hover:text-brand">
+                            {venue.name}
+                          </h3>
+                          <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {(venue.city as any)?.name || ""}
+                          </p>
+                          {venue.description && (
+                            <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                              {venue.description}
+                            </p>
+                          )}
+                          <div className="mt-4 flex items-center gap-4 text-sm">
+                            {venue.number_of_screens && (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Tv className="h-3.5 w-3.5" />
+                                {venue.number_of_screens} screens
+                              </span>
+                            )}
+                            {venue.google_rating && (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                {venue.google_rating}
+                              </span>
+                            )}
+                          </div>
+                          {leagueTags.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {leagueTags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })
+                : FALLBACK_VENUES.map((venue) => (
+                    <Link
+                      key={venue.slug}
+                      href={`/venues/${venue.slug}`}
+                      className="group block"
+                    >
+                      <div className="rounded-xl border border-border bg-background p-5 transition-all hover:border-brand hover:shadow-md">
                         <h3 className="font-semibold group-hover:text-brand">
                           {venue.name}
                         </h3>
@@ -231,34 +378,45 @@ export default async function Home() {
                           <MapPin className="h-3.5 w-3.5" />
                           {venue.city}
                         </p>
+                        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                          {venue.description}
+                        </p>
+                        <div className="mt-4 flex items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Tv className="h-3.5 w-3.5" />
+                            {venue.screens} screens
+                          </span>
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            {venue.rating}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {venue.leagues.map((l) => (
+                            <span
+                              key={l}
+                              className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
+                            >
+                              {l}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      {venue.description}
-                    </p>
-                    <div className="mt-4 flex items-center gap-4 text-sm">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Tv className="h-3.5 w-3.5" />
-                        {venue.screens} screens
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        {venue.rating}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {venue.leagues.map((l) => (
-                        <span
-                          key={l}
-                          className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
-                        >
-                          {l}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                    </Link>
+                  ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Find nearest venue */}
+        <section className="border-t border-border bg-muted">
+          <div className="mx-auto max-w-6xl px-4 py-16 text-center">
+            <h2 className="text-2xl font-bold">Find a venue near you</h2>
+            <p className="mt-2 text-muted-foreground">
+              Share your location and we&apos;ll find the closest sports bar instantly.
+            </p>
+            <div className="mt-8 max-w-xl mx-auto">
+              <NearestVenueFinder />
             </div>
           </div>
         </section>
@@ -311,10 +469,10 @@ export default async function Home() {
             </p>
             <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
               {[
-                { value: `${allCities.length}+`, label: "Cities indexed" },
-                { value: "100+", label: "Verified venues" },
+                { value: `${allCities.length.toLocaleString()}+`, label: "Cities indexed" },
+                { value: `${stats.venueCount.toLocaleString()}+`, label: "Sports bars listed" },
                 { value: `${leagues.length}+`, label: "Leagues covered" },
-                { value: "50+", label: "Countries" },
+                { value: `${stats.countryCount}+`, label: "Countries" },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-4xl font-bold text-brand">

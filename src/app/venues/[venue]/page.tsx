@@ -12,6 +12,9 @@ import {
   ExternalLink,
   Users,
   Monitor,
+  Calendar,
+  Clock,
+  ChevronRight,
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -20,8 +23,8 @@ import JsonLd from "@/components/seo/JsonLd";
 import LeagueList from "@/components/venues/LeagueList";
 import ReviewForm from "@/components/venues/ReviewForm";
 import ShareButton from "@/components/venues/ShareButton";
-import { getVenueBySlug, getNearbyVenues } from "@/lib/supabase/queries";
-import { ATMOSPHERE_LABELS, PRICE_LABELS, SITE_URL } from "@/lib/constants";
+import { getVenueBySlug, getNearbyVenues, getUpcomingFixturesForLeagues } from "@/lib/supabase/queries";
+import { ATMOSPHERE_LABELS, PRICE_LABELS, SITE_URL, SPORT_ICONS } from "@/lib/constants";
 
 interface Props {
   params: Promise<{ venue: string }>;
@@ -83,12 +86,14 @@ export default async function VenuePage({ params }: Props) {
   const venue = await getVenueBySlug(venueSlug);
   if (!venue) notFound();
 
-  const nearbyVenues = await getNearbyVenues(
-    venue.id,
-    venue.latitude,
-    venue.longitude,
-    4
-  );
+  const leagueIds = (venue.venue_leagues || [])
+    .map((vl) => vl.league_id)
+    .filter(Boolean);
+
+  const [nearbyVenues, upcomingFixtures] = await Promise.all([
+    getNearbyVenues(venue.id, venue.latitude, venue.longitude, 4),
+    getUpcomingFixturesForLeagues(leagueIds),
+  ]);
 
   const avgRating =
     venue.reviews && venue.reviews.length > 0
@@ -321,6 +326,63 @@ export default async function VenuePage({ params }: Props) {
                 confirmedLeagues={confirmedLeagues}
                 otherLeagues={otherLeagues}
               />
+            )}
+
+            {/* Upcoming fixtures */}
+            {upcomingFixtures.length > 0 && (
+              <section className="mt-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold">Upcoming matches here</h2>
+                  <Link
+                    href="/matches"
+                    className="flex items-center gap-1 text-sm text-brand hover:underline"
+                  >
+                    All fixtures <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {upcomingFixtures.map((fixture) => {
+                    const matchDate = new Date(fixture.match_date);
+                    const dateStr = matchDate.toLocaleDateString("en-GB", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    });
+                    const timeStr = matchDate.toLocaleTimeString("en-GB", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZoneName: "short",
+                    });
+                    const leagueSlug = (fixture.league as any)?.slug;
+                    const sport = (fixture.league as any)?.sport;
+                    return (
+                      <Link
+                        key={fixture.id}
+                        href={leagueSlug ? `/matches/${leagueSlug}/${fixture.id}` : "#"}
+                        className="group flex items-center gap-3 rounded-lg border border-border p-3 transition-all hover:border-brand hover:shadow-sm"
+                      >
+                        <span className="text-lg">{SPORT_ICONS[sport] || "🏆"}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium group-hover:text-brand">
+                            {fixture.home_team_name} vs {fixture.away_team_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {(fixture.league as any)?.short_name || (fixture.league as any)?.name}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right text-xs text-muted-foreground">
+                          <p className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />{dateStr}
+                          </p>
+                          <p className="flex items-center gap-1 mt-0.5">
+                            <Clock className="h-3 w-3" />{timeStr}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
             )}
 
             {/* Reviews */}

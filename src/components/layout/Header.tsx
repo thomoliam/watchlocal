@@ -31,16 +31,22 @@ export default function Header() {
         {/* Nav — desktop */}
         <nav className="hidden items-center gap-5 text-sm md:flex">
           <Link
-            href="/watch/premier-league"
+            href="/sports"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Leagues
           </Link>
           <Link
-            href="/cities/bangkok"
+            href="/countries"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Cities
+          </Link>
+          <Link
+            href="/matches"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Matches
           </Link>
           <Link
             href="/events"
@@ -91,18 +97,25 @@ export default function Header() {
           </div>
           <nav className="flex flex-col gap-3 text-sm">
             <Link
-              href="/watch/premier-league"
+              href="/sports"
               className="text-muted-foreground"
               onClick={() => setMobileOpen(false)}
             >
               Leagues
             </Link>
             <Link
-              href="/cities/bangkok"
+              href="/countries"
               className="text-muted-foreground"
               onClick={() => setMobileOpen(false)}
             >
               Cities
+            </Link>
+            <Link
+              href="/matches"
+              className="text-muted-foreground"
+              onClick={() => setMobileOpen(false)}
+            >
+              Matches
             </Link>
             <Link
               href="/events"

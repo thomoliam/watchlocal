@@ -18,6 +18,7 @@ import {
   getCitiesWithVenuesForLeague,
   getOtherLeaguesInCity,
   getOtherCitiesForLeague,
+  getUpcomingFixturesForLeague,
 } from "@/lib/supabase/queries";
 import {
   generateLeagueCityMeta,
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (city) {
     const meta = generateLeagueCityMeta(league.name, city.name, 0);
     const title = `Where to Watch ${league.name} in ${city.name} | Best Sports Bars`;
+    const ogImage = `${SITE_URL}/api/og?title=${encodeURIComponent(`Watch ${league.name} in ${city.name}`)}&subtitle=${encodeURIComponent(`Verified sports bars & venues`)}&badge=${encodeURIComponent(league.short_name || league.name)}`;
     return {
       title,
       description: meta.description,
@@ -51,11 +53,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description: meta.description,
         url: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
         type: "website",
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description: meta.description,
+        images: [ogImage],
       },
       alternates: {
         canonical: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
@@ -67,6 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (team) {
     const title = `Where to Watch ${team.name} | Best Bars & Venues`;
     const description = `Find the best bars and venues showing ${team.name} (${league.name}) worldwide. Verified venues and fan communities.`;
+    const ogImage = `${SITE_URL}/api/og?title=${encodeURIComponent(`Watch ${team.name}`)}&subtitle=${encodeURIComponent(`${league.name} — verified sports bars worldwide`)}&badge=${encodeURIComponent(league.short_name || league.name)}`;
     return {
       title,
       description,
@@ -75,6 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         url: `${SITE_URL}/watch/${leagueSlug}/${cityOrTeam}`,
         type: "website",
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       },
       twitter: {
         card: "summary_large_image",
@@ -111,10 +117,11 @@ export default async function LeagueCityOrTeamPage({ params }: Props) {
 }
 
 async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
-  const [venues, otherLeagues, otherCities] = await Promise.all([
+  const [venues, otherLeagues, otherCities, upcomingFixtures] = await Promise.all([
     getVenuesForLeagueInCity(leagueSlug, city.slug),
     getOtherLeaguesInCity(city.slug, leagueSlug),
     getOtherCitiesForLeague(leagueSlug, city.slug),
+    getUpcomingFixturesForLeague(leagueSlug, 5),
   ]);
   const topVenueName = venues.length > 0 ? venues[0].name : undefined;
   const faqs = generateLeagueCityFAQs(
@@ -227,6 +234,52 @@ async function renderLeagueCity(league: any, city: any, leagueSlug: string) {
               Submit a venue
             </Link>
           </div>
+        )}
+
+        {/* Upcoming Matches */}
+        {upcomingFixtures.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-bold">Upcoming {league.name} Matches</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Next fixtures — click to find bars showing each match in {city.name}.
+            </p>
+            <div className="mt-4 divide-y divide-border rounded-xl border border-border">
+              {upcomingFixtures.map((fixture) => {
+                const matchDate = new Date(fixture.match_date);
+                const homeTeam = fixture.home_team?.name || fixture.home_team_name;
+                const awayTeam = fixture.away_team?.name || fixture.away_team_name;
+                return (
+                  <Link
+                    key={fixture.id}
+                    href={`/matches/${leagueSlug}/${fixture.id}`}
+                    className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-muted"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-medium">
+                        {homeTeam} vs {awayTeam}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {matchDate.toLocaleDateString("en-GB", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}{" "}
+                        &middot;{" "}
+                        {matchDate.toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: city.timezone,
+                        })}{" "}
+                        local
+                      </div>
+                    </div>
+                    <ChevronRight className="ml-2 h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
         )}
 
         {/* FAQ */}

@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { countryToSlug } from "@/lib/countries";
 import { EVENTS } from "@/lib/events";
 import { getAllGuides } from "@/lib/guides";
+import { getAllNeighbourhoodCombos } from "@/lib/neighbourhoods";
+import { FEATURE_SLUGS } from "@/lib/venue-features";
+import { getAllSports, getCitiesForCountryCodes } from "@/lib/supabase/queries";
+import { CHANNEL_SLUGS, getChannel, getCountriesForChannel } from "@/lib/tv-channels";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://watchlocal.co";
@@ -22,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/claim-venue`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
     {
       url: `${BASE_URL}/about`,
@@ -156,6 +166,93 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
+  // Neighbourhood pages — /cities/[city]/[neighbourhood]
+  const neighbourhoodPages: MetadataRoute.Sitemap = getAllNeighbourhoodCombos().map(
+    ({ citySlug, neighbourhood }) => ({
+      url: `${BASE_URL}/cities/${citySlug}/${neighbourhood.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.75,
+    })
+  );
+
+  // Feature filter pages — /cities/[city]/[feature] for cities with neighbourhoods defined
+  const { CITY_NEIGHBOURHOODS } = await import("@/lib/neighbourhoods");
+  const citiesWithNeighbourhoods = Object.keys(CITY_NEIGHBOURHOODS);
+  const featurePages: MetadataRoute.Sitemap = citiesWithNeighbourhoods.flatMap((citySlug) =>
+    FEATURE_SLUGS.map((featureSlug) => ({
+      url: `${BASE_URL}/cities/${citySlug}/${featureSlug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }))
+  );
+
+  // Sport pages — /sports and /sports/[sport]
+  const sports = await getAllSports();
+  const sportPages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/sports`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+    ...sports.map((sport) => ({
+      url: `${BASE_URL}/sports/${sport}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.75,
+    })),
+  ];
+
+  // Channel hub pages — /channels and /channels/[channel]
+  const channelPages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/channels`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    },
+    ...CHANNEL_SLUGS.map((slug) => ({
+      url: `${BASE_URL}/channels/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.65,
+    })),
+  ];
+
+  // Channel × city pages — /channels/[channel]/[city]
+  const channelCityPages: MetadataRoute.Sitemap = [];
+  for (const channelSlug of CHANNEL_SLUGS) {
+    const channel = getChannel(channelSlug)!;
+    const countryCodes = getCountriesForChannel(channel);
+    const channelCities = await getCitiesForCountryCodes(countryCodes);
+    for (const city of channelCities) {
+      channelCityPages.push({
+        url: `${BASE_URL}/channels/${channelSlug}/${city.slug}`,
+        lastModified: new Date(),
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      });
+    }
+  }
+
+  // Match event pages — /matches/[league]/[fixture]
+  const { data: fixtures } = await supabase
+    .from("fixtures")
+    .select("id, league:leagues!inner(slug), match_date")
+    .gte("match_date", new Date().toISOString())
+    .eq("status", "scheduled")
+    .order("match_date", { ascending: true })
+    .limit(500);
+
+  const matchPages: MetadataRoute.Sitemap = (fixtures || []).map((f: any) => ({
+    url: `${BASE_URL}/matches/${f.league.slug}/${f.id}`,
+    lastModified: new Date(f.match_date),
+    changeFrequency: "daily" as const,
+    priority: 0.8,
+  }));
+
   return [
     ...staticPages,
     ...leaguePages,
@@ -166,5 +263,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...countryPages,
     ...eventPages,
     ...guidePages,
+    ...neighbourhoodPages,
+    ...featurePages,
+    ...sportPages,
+    ...channelPages,
+    ...channelCityPages,
+    ...matchPages,
   ];
 }

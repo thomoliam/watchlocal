@@ -31,6 +31,15 @@ export async function generateMetadata({
 
   const { title, description, heroImage } = guide.frontmatter;
 
+  const ogImage = heroImage
+    ? { url: heroImage, width: 1200, height: 630, alt: title }
+    : {
+        url: `${SITE_URL}/api/og?title=${encodeURIComponent(title)}&subtitle=${encodeURIComponent(description)}`,
+        width: 1200,
+        height: 630,
+        alt: title,
+      };
+
   return {
     title,
     description,
@@ -41,12 +50,13 @@ export async function generateMetadata({
       publishedTime: guide.frontmatter.publishedAt,
       modifiedTime: guide.frontmatter.updatedAt,
       authors: [guide.frontmatter.author],
-      ...(heroImage && { images: [{ url: heroImage }] }),
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage.url],
     },
     alternates: {
       canonical: `/guides/${slug}`,
@@ -101,24 +111,50 @@ export default async function GuidePage({ params }: PageProps) {
     description: frontmatter.description,
     author: {
       "@type": "Organization",
-      name: frontmatter.author,
+      name: "WatchLocal",
+      url: SITE_URL,
     },
     publisher: {
       "@type": "Organization",
       name: "WatchLocal",
       url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
     },
     datePublished: frontmatter.publishedAt,
     dateModified: frontmatter.updatedAt,
-    mainEntityOfPage: `${SITE_URL}/guides/${slug}`,
-    ...(frontmatter.heroImage && {
-      image: frontmatter.heroImage,
-    }),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/guides/${slug}`,
+    },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["h1", "p.guide-intro", "h2"],
+    },
+    ...(frontmatter.heroImage && { image: frontmatter.heroImage }),
   };
+
+  const faqSchema = frontmatter.faq && frontmatter.faq.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: frontmatter.faq.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      }
+    : null;
 
   return (
     <>
       <JsonLd data={articleSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
       <Header />
       <main>
         {/* Hero */}

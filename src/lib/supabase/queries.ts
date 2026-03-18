@@ -1,4 +1,4 @@
-import { createClient } from "./server";
+import { createClient, createStaticClient } from "./server";
 import type {
   Venue,
   Team,
@@ -194,7 +194,6 @@ export async function getNearbyVenues(
   limit: number = 4
 ): Promise<Venue[]> {
   const supabase = await createClient();
-  // Simple bounding-box approach — fetch nearby then sort by distance in JS
   const delta = 0.5; // ~50km radius
   const { data } = await supabase
     .from("venues")
@@ -215,7 +214,6 @@ export async function getNearbyVenues(
 
   if (!data || data.length === 0) return [];
 
-  // Haversine-ish distance in km, then sort and take closest N
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const withDist = data.map((v) => {
     const dLat = toRad(v.latitude - latitude);
@@ -233,8 +231,91 @@ export async function getNearbyVenues(
 }
 
 // ============================================================
+// NEIGHBOURHOOD + FEATURE FILTERED VENUES
+// ============================================================
+
+export async function getVenuesInNeighbourhood(
+  citySlug: string,
+  latMin: number,
+  latMax: number,
+  lngMin: number,
+  lngMax: number
+): Promise<Venue[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select(
+      `
+      *,
+      city:cities!inner(*),
+      venue_leagues(*, league:leagues(*))
+    `
+    )
+    .eq("city.slug", citySlug)
+    .eq("status", "active")
+    .gte("latitude", latMin)
+    .lte("latitude", latMax)
+    .gte("longitude", lngMin)
+    .lte("longitude", lngMax)
+    .order("is_verified", { ascending: false })
+    .order("google_rating", { ascending: false });
+  return data || [];
+}
+
+export async function getVenuesInCityWithFeature(
+  citySlug: string,
+  column: string,
+  value: boolean | string | number
+): Promise<Venue[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select(
+      `
+      *,
+      city:cities!inner(*),
+      venue_leagues(*, league:leagues(*))
+    `
+    )
+    .eq("city.slug", citySlug)
+    .eq("status", "active")
+    .filter(column, "eq", value)
+    .order("is_verified", { ascending: false })
+    .order("google_rating", { ascending: false });
+  return data || [];
+}
+
+// ============================================================
 // FIXTURES
 // ============================================================
+
+/**
+ * Upcoming fixtures across multiple leagues — used on venue pages.
+ * Takes league IDs (UUIDs) from venue_leagues join.
+ */
+export async function getUpcomingFixturesForLeagues(
+  leagueIds: string[],
+  limit = 8
+): Promise<Fixture[]> {
+  if (leagueIds.length === 0) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("fixtures")
+    .select(
+      `
+      *,
+      league:leagues(*),
+      home_team:teams!fixtures_home_team_id_fkey(*),
+      away_team:teams!fixtures_away_team_id_fkey(*)
+    `
+    )
+    .in("league_id", leagueIds)
+    .gte("match_date", new Date().toISOString())
+    .eq("status", "scheduled")
+    .order("match_date", { ascending: true })
+    .limit(limit);
+  return data || [];
+}
 
 export async function getUpcomingFixtures(
   leagueSlug: string,
@@ -265,6 +346,42 @@ export async function getUpcomingFixtures(
   }
 
   const { data } = await query;
+  return data || [];
+}
+
+export async function getFixtureById(id: string): Promise<Fixture | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("fixtures")
+    .select(
+      `
+      *,
+      league:leagues(*),
+      home_team:teams!fixtures_home_team_id_fkey(*),
+      away_team:teams!fixtures_away_team_id_fkey(*)
+    `
+    )
+    .eq("id", id)
+    .single();
+  return data;
+}
+
+export async function getAllUpcomingFixtures(limit = 200): Promise<Fixture[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("fixtures")
+    .select(
+      `
+      *,
+      league:leagues(*),
+      home_team:teams!fixtures_home_team_id_fkey(*),
+      away_team:teams!fixtures_away_team_id_fkey(*)
+    `
+    )
+    .gte("match_date", new Date().toISOString())
+    .eq("status", "scheduled")
+    .order("match_date", { ascending: true })
+    .limit(limit);
   return data || [];
 }
 
@@ -380,7 +497,6 @@ export async function getTopLeagueSlugs(limit: number = 20): Promise<string[]> {
 // CROSS-LINKING
 // ============================================================
 
-/** Other leagues that have venues in the same city */
 export async function getOtherLeaguesInCity(
   citySlug: string,
   excludeLeagueSlug: string
@@ -402,7 +518,6 @@ export async function getOtherLeaguesInCity(
   });
 }
 
-/** Other cities that have venues for the same league */
 export async function getOtherCitiesForLeague(
   leagueSlug: string,
   excludeCitySlug: string
@@ -428,10 +543,7 @@ export async function getOtherCitiesForLeague(
 // COUNTRIES
 // ============================================================
 
-/** Get all cities for a given country name */
-export async function getCitiesByCountry(
-  country: string
-): Promise<City[]> {
+export async function getCitiesByCountry(country: string): Promise<City[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("cities")
@@ -442,10 +554,7 @@ export async function getCitiesByCountry(
   return data || [];
 }
 
-/** Get venue count for a given city slug */
-export async function getVenueCountForCity(
-  citySlug: string
-): Promise<number> {
+export async function getVenueCountForCity(citySlug: string): Promise<number> {
   const supabase = await createClient();
   const { count } = await supabase
     .from("venues")
@@ -455,7 +564,6 @@ export async function getVenueCountForCity(
   return count || 0;
 }
 
-/** Get all unique countries from cities table with city counts */
 export async function getAllCountriesWithCounts(): Promise<
   { country: string; city_count: number; venue_count: number }[]
 > {
@@ -463,7 +571,6 @@ export async function getAllCountriesWithCounts(): Promise<
   const { data: cities } = await supabase.from("cities").select("country, slug");
   if (!cities || cities.length === 0) return [];
 
-  // Count cities per country
   const countryMap = new Map<string, { city_count: number; city_slugs: string[] }>();
   for (const city of cities) {
     const existing = countryMap.get(city.country) || { city_count: 0, city_slugs: [] };
@@ -472,7 +579,6 @@ export async function getAllCountriesWithCounts(): Promise<
     countryMap.set(city.country, existing);
   }
 
-  // Get venue counts via venues joined to cities
   const { data: venues } = await supabase
     .from("venues")
     .select("city:cities!inner(country)")
@@ -499,7 +605,6 @@ export async function getAllCountriesWithCounts(): Promise<
   return results;
 }
 
-/** Get popular leagues in a country based on venue_leagues for venues in that country's cities */
 export async function getPopularLeaguesInCountry(
   country: string
 ): Promise<{ league_slug: string; league_name: string; sport: string; venue_count: number }[]> {
@@ -536,10 +641,7 @@ export async function getPopularLeaguesInCountry(
   return Array.from(leagueMap.values()).sort((a, b) => b.venue_count - a.venue_count);
 }
 
-/** Get total venue count for venues in a given country */
-export async function getVenueCountForCountry(
-  country: string
-): Promise<number> {
+export async function getVenueCountForCountry(country: string): Promise<number> {
   const supabase = await createClient();
   const { count } = await supabase
     .from("venues")
@@ -549,7 +651,6 @@ export async function getVenueCountForCountry(
   return count || 0;
 }
 
-/** Get venues in cities that belong to a given country, for counting */
 export async function getVenuesInCountryCities(
   citySlugs: string[]
 ): Promise<{ city_slug: string; venue_count: number }[]> {
@@ -575,6 +676,97 @@ export async function getVenuesInCountryCities(
 }
 
 // ============================================================
+// STATS
+// ============================================================
+
+export async function getSiteStats(): Promise<{
+  venueCount: number;
+  countryCount: number;
+}> {
+  const supabase = await createClient();
+  const [{ count: venueCount }, { data: countries }] = await Promise.all([
+    supabase
+      .from("venues")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active"),
+    supabase.from("cities").select("country"),
+  ]);
+  const uniqueCountries = new Set((countries || []).map((c) => c.country));
+  return {
+    venueCount: venueCount || 0,
+    countryCount: uniqueCountries.size,
+  };
+}
+
+// ============================================================
+// SPORTS
+// ============================================================
+
+export async function getAllSports(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("leagues")
+    .select("sport")
+    .eq("is_active", true);
+  const seen = new Set<string>();
+  for (const row of data || []) {
+    if (row.sport) seen.add(row.sport);
+  }
+  return Array.from(seen).sort();
+}
+
+export async function getLeaguesBySport(
+  sport: string
+): Promise<(League & { city_count: number })[]> {
+  const supabase = await createClient();
+
+  // Get leagues for this sport
+  const { data: leagues } = await supabase
+    .from("leagues")
+    .select("*")
+    .eq("sport", sport)
+    .eq("is_active", true)
+    .order("tier", { ascending: true })
+    .order("name");
+
+  if (!leagues || leagues.length === 0) return [];
+
+  // For each league, count distinct cities via page_combos
+  const { data: combos } = await supabase
+    .from("page_combos")
+    .select("league_slug, city_slug")
+    .in(
+      "league_slug",
+      leagues.map((l) => l.slug)
+    )
+    .gt("venue_count", 0);
+
+  const cityCountMap = new Map<string, Set<string>>();
+  for (const row of (combos || []) as any[]) {
+    if (!cityCountMap.has(row.league_slug)) {
+      cityCountMap.set(row.league_slug, new Set());
+    }
+    cityCountMap.get(row.league_slug)!.add(row.city_slug);
+  }
+
+  return leagues.map((league) => ({
+    ...league,
+    city_count: cityCountMap.get(league.slug)?.size ?? 0,
+  })) as (League & { city_count: number })[];
+}
+
+// ============================================================
+// UPCOMING FIXTURES FOR LEAGUE (city-page widget)
+// ============================================================
+
+export async function getUpcomingFixturesForLeague(
+  leagueSlug: string,
+  limit: number = 5
+): Promise<Fixture[]> {
+  return getUpcomingFixtures(leagueSlug, undefined, limit);
+}
+
+// ============================================================
 // PAGE GENERATION
 // ============================================================
 
@@ -582,6 +774,19 @@ export async function getAllPageCombos() {
   const supabase = await createClient();
   const { data } = await supabase.from("page_combos").select("*");
   return data || [];
+}
+
+/** Distinct city slugs that have at least one active venue — used for feature filter static params. */
+export async function getCitySlugsWithVenues(): Promise<string[]> {
+  // Uses cookie-free client — safe to call from generateStaticParams (no request scope)
+  const supabase = createStaticClient();
+  const { data } = await supabase
+    .from("page_combos")
+    .select("city_slug")
+    .gt("venue_count", 0);
+  const seen = new Set<string>();
+  for (const row of data || []) seen.add(row.city_slug);
+  return Array.from(seen);
 }
 
 export async function getLeagueCityCombos() {
@@ -598,4 +803,81 @@ export async function getLeagueCityCombos() {
     seen.add(key);
     return true;
   });
+}
+
+// ============================================================
+// TV CHANNEL PAGES
+// ============================================================
+
+/**
+ * Get cities in specific country codes — used by /channels/[channel]/[city] static params.
+ */
+export async function getCitiesForCountryCodes(countryCodes: string[]): Promise<City[]> {
+  // Uses cookie-free client — safe to call from generateStaticParams
+  const supabase = createStaticClient();
+  const { data } = await supabase
+    .from("cities")
+    .select("*")
+    .in("country_code", countryCodes)
+    .order("tier", { ascending: true })
+    .order("name");
+  return data || [];
+}
+
+/**
+ * Get venues in a city that show at least one of the given league slugs.
+ * Used by /channels/[channel]/[city] to show venues for a broadcaster's content.
+ */
+export async function getVenuesForLeaguesInCity(
+  citySlug: string,
+  leagueSlugs: string[]
+): Promise<Venue[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select(
+      `
+      *,
+      city:cities!inner(*),
+      venue_leagues(*, league:leagues(*))
+    `
+    )
+    .eq("city.slug", citySlug)
+    .eq("status", "active")
+    .order("is_verified", { ascending: false })
+    .order("is_premium", { ascending: false });
+
+  // Filter client-side: venue must show at least one of the target leagues
+  return (data || []).filter((v: any) => {
+    const slugs = (v.venue_leagues || [])
+      .map((vl: any) => vl.league?.slug)
+      .filter(Boolean);
+    return slugs.some((s: string) => leagueSlugs.includes(s));
+  });
+}
+
+// ============================================================
+// FEATURED VENUES (homepage)
+// ============================================================
+
+/**
+ * Top verified venues by rating — used on the homepage featured venues section.
+ */
+export async function getFeaturedVenues(limit = 3): Promise<Venue[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("venues")
+    .select(
+      `
+      *,
+      city:cities(*),
+      venue_leagues(*, league:leagues(*))
+    `
+    )
+    .eq("status", "active")
+    .eq("is_verified", true)
+    .order("google_rating", { ascending: false })
+    .order("google_review_count", { ascending: false })
+    .limit(limit);
+  return data || [];
 }

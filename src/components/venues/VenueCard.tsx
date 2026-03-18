@@ -11,13 +11,18 @@ import {
 import type { Venue } from "@/lib/types";
 import { ATMOSPHERE_LABELS } from "@/lib/constants";
 
+function encodeVenueName(name: string) {
+  return encodeURIComponent(name);
+}
+
 interface VenueCardProps {
   venue: Venue;
 }
 
 export default function VenueCard({ venue }: VenueCardProps) {
   return (
-    <Link href={`/venues/${venue.slug}`} className="group block">
+    <div className="group relative">
+      <Link href={`/venues/${venue.slug}`} className="block">
       <div className="overflow-hidden rounded-xl border border-border bg-background transition-all hover:border-brand hover:shadow-md">
         {/* Image */}
         {venue.hero_image_url ? (
@@ -124,5 +129,16 @@ export default function VenueCard({ venue }: VenueCardProps) {
         </div>
       </div>
     </Link>
+      {/* Claim link — rendered outside the card Link to avoid nested <a> */}
+      <div className="mt-1 px-1">
+        <Link
+          href={`/claim-venue?venue=${encodeVenueName(venue.name)}`}
+          className="text-xs text-muted-foreground/60 hover:text-muted-foreground hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Own this venue? Claim it
+        </Link>
+      </div>
+    </div>
   );
 }
