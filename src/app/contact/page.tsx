@@ -4,9 +4,20 @@ import { Mail, MapPin, MessageSquare } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://watchlocal.co";
+
 export const metadata: Metadata = {
-  title: "Contact Us",
+  title: "Contact Us | WatchLocal",
   description: "Get in touch with the WatchLocal team — venue submissions, partnerships, and general enquiries.",
+  openGraph: {
+    title: "Contact Us | WatchLocal",
+    description: "Get in touch with the WatchLocal team — venue submissions, partnerships, and general enquiries.",
+    url: `${SITE_URL}/contact`,
+    type: "website",
+  },
+  alternates: {
+    canonical: `${SITE_URL}/contact`,
+  },
 };
 
 export default function ContactPage() {

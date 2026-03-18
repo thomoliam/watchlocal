@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "watchlocal",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/tmp/watchlocal-proxy.mjs"],
+      "port": 3001,
+      "autoPort": true
     }
   ]
 }

@@ -3,8 +3,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
+  title: "Terms of Service | WatchLocal",
   description: "WatchLocal terms of service — rules for using our platform.",
+  robots: { index: false, follow: false },
 };
 
 export default function TermsPage() {

@@ -52,7 +52,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      openGraph: { title, description, url: `${SITE_URL}/cities/${citySlug}/${segment}` },
+      openGraph: { title, description, url: `${SITE_URL}/cities/${citySlug}/${segment}`, type: "website" },
+      twitter: { card: "summary_large_image", title, description },
       alternates: { canonical: `${SITE_URL}/cities/${citySlug}/${segment}` },
     };
   }
@@ -65,7 +66,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      openGraph: { title, description, url: `${SITE_URL}/cities/${citySlug}/${segment}` },
+      openGraph: { title, description, url: `${SITE_URL}/cities/${citySlug}/${segment}`, type: "website" },
+      twitter: { card: "summary_large_image", title, description },
       alternates: { canonical: `${SITE_URL}/cities/${citySlug}/${segment}` },
     };
   }

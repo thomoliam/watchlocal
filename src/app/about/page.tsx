@@ -4,10 +4,28 @@ import { Globe, Users, MapPin, Trophy, Heart, Mail } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://watchlocal.co";
+
 export const metadata: Metadata = {
-  title: "About WatchLocal",
+  title: "About WatchLocal — Sports Bar Finder for Expats & Travellers",
   description:
-    "WatchLocal helps expats, travellers, and sports fans find the best bars and venues to watch live sport anywhere in the world.",
+    "WatchLocal helps expats, travellers, and sports fans find the best bars and venues to watch live sport anywhere in the world. 8,000+ verified venues in 1,100+ cities.",
+  openGraph: {
+    title: "About WatchLocal — Sports Bar Finder for Expats & Travellers",
+    description:
+      "WatchLocal helps expats, travellers, and sports fans find the best bars and venues to watch live sport anywhere in the world.",
+    url: `${SITE_URL}/about`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About WatchLocal",
+    description:
+      "WatchLocal helps expats, travellers, and sports fans find the best bars and venues to watch live sport anywhere in the world.",
+  },
+  alternates: {
+    canonical: `${SITE_URL}/about`,
+  },
 };
 
 const STATS = [

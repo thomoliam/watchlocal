@@ -3,8 +3,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
+  title: "Privacy Policy | WatchLocal",
   description: "WatchLocal privacy policy — how we collect, use, and protect your data.",
+  robots: { index: false, follow: false },
 };
 
 export default function PrivacyPage() {

@@ -16,12 +16,25 @@ interface Props {
   searchParams: Promise<{ q?: string }>;
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://watchlocal.co";
+
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
+  const title = q ? `Search results for "${q}" | WatchLocal` : "Search Sports Bars & Venues | WatchLocal";
+  const description = q
+    ? `Search results for "${q}" — find sports bars, leagues, cities, and venues on WatchLocal.`
+    : "Search for sports bars, leagues, teams, and cities on WatchLocal. Find verified venues worldwide.";
   return {
-    title: q
-      ? `Search results for "${q}"`
-      : "Search",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: q ? `${SITE_URL}/search?q=${encodeURIComponent(q)}` : `${SITE_URL}/search`,
+      type: "website",
+    },
+    // No canonical for search pages — prevent indexing of search result pages
+    robots: { index: false, follow: true },
   };
 }
 
