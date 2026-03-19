@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "sync-fixtures": "npx tsx scripts/sync-fixtures.ts",
-    "load-venues": "npx tsx scripts/load-real-venues.ts"
+    "load-venues": "npx tsx scripts/load-real-venues.ts",
+    "scrape-photos": "npx tsx scripts/scrape-photos.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
