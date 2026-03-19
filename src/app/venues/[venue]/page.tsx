@@ -485,7 +485,7 @@ export default async function VenuePage({ params }: Props) {
                           {nearby.name}
                         </h3>
                         {nearby.distance_km != null && (
-                          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-muted-foreground dark:bg-gray-800">
+                          <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
                             {nearby.distance_km < 1
                               ? `${Math.round(nearby.distance_km * 1000)}m`
                               : `${nearby.distance_km}km`}

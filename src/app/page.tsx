@@ -161,6 +161,19 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* Find nearest venue */}
+        <section className="border-t border-border bg-muted">
+          <div className="mx-auto max-w-6xl px-4 py-16 text-center">
+            <h2 className="text-2xl font-bold">Find a venue near you</h2>
+            <p className="mt-2 text-muted-foreground">
+              Share your location and we&apos;ll find the closest sports bar instantly.
+            </p>
+            <div className="mt-8 max-w-xl mx-auto">
+              <NearestVenueFinder />
+            </div>
+          </div>
+        </section>
+
         {/* Suggested for you (geo-detected) */}
         <SuggestedLeagues />
 
@@ -404,19 +417,6 @@ export default async function Home() {
                       </div>
                     </Link>
                   ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Find nearest venue */}
-        <section className="border-t border-border bg-muted">
-          <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-            <h2 className="text-2xl font-bold">Find a venue near you</h2>
-            <p className="mt-2 text-muted-foreground">
-              Share your location and we&apos;ll find the closest sports bar instantly.
-            </p>
-            <div className="mt-8 max-w-xl mx-auto">
-              <NearestVenueFinder />
             </div>
           </div>
         </section>
